@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "Open Claude Code",
-        "width": 800,
-        "height": 600
+        "width": 960,
+        "height": 760
       }
     ],
     "security": {
