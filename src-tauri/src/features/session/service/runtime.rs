@@ -30,13 +30,7 @@ pub(super) fn publish_runtime(inner: &AppSessionState) -> Result<(), SessionErro
     let endpoint = RuntimeEndpoint {
         base_url: inner.backend.gateway_base_url().to_owned(),
         token: inner.backend.gateway_token().expose_secret().to_owned(),
-        models: published_catalog(&inner.settings)
-            .into_iter()
-            .map(|model| RuntimeModel {
-                id: model.id,
-                display_name: model.display_name,
-            })
-            .collect(),
+        models: published_runtime_models(&inner.settings),
         aliases: inner.settings.aliases.clone(),
     };
     endpoint
@@ -77,6 +71,7 @@ pub(super) async fn snapshot_from_state(inner: &AppSessionState) -> DashboardSna
         models: published_catalog(&inner.settings),
         custom_models: inner.settings.custom_models.clone(),
         aliases: inner.settings.aliases.clone(),
+        launch_model_id: launch_model_id(&inner.settings),
         terminal: inner.settings.terminal,
         terminals: list_available_terminals(),
         last_workspace: inner.settings.last_workspace.clone(),
@@ -94,10 +89,11 @@ pub(super) async fn ensure_can_launch(
     if !matches!(connection, ProviderConnectionState::Connected) {
         return Err(SessionError::NotConnected);
     }
-    if is_known_model(&inner.settings, &input.model_id) {
-        return Ok(());
-    }
-    Err(SessionError::UnknownModel)
+    ensure_known_model(
+        &inner.settings,
+        &inner.settings.custom_models,
+        &input.model_id,
+    )
 }
 
 /// Returns the cached catalog, or the fallback catalog when none is cached.
@@ -106,6 +102,38 @@ pub(super) fn published_catalog(settings: &AppSettings) -> Vec<ModelCatalogEntry
         return OpenCodeGoBackend::fallback_catalog();
     }
     settings.cached_models.clone()
+}
+
+/// Publishes both discovered and custom models for the terminal CLI picker.
+fn published_runtime_models(settings: &AppSettings) -> Vec<RuntimeModel> {
+    runtime_models(published_catalog(settings), &settings.custom_models)
+}
+
+fn runtime_models(
+    catalog_models: Vec<ModelCatalogEntry>,
+    custom_model_ids: &[String],
+) -> Vec<RuntimeModel> {
+    let mut published_model_ids = HashSet::new();
+    let mut runtime_models = catalog_models
+        .into_iter()
+        .map(|model| {
+            published_model_ids.insert(model.id.clone());
+            RuntimeModel {
+                id: model.id,
+                display_name: model.display_name,
+            }
+        })
+        .collect::<Vec<_>>();
+    runtime_models.extend(
+        custom_model_ids
+            .iter()
+            .filter(|model_id| published_model_ids.insert((*model_id).clone()))
+            .map(|model_id| RuntimeModel {
+                id: model_id.clone(),
+                display_name: model_id.clone(),
+            }),
+    );
+    runtime_models
 }
 
 /// Replaces an empty catalog with the fallback catalog.
@@ -138,8 +166,24 @@ pub(super) fn ensure_known_aliases(
     Err(SessionError::UnknownModel)
 }
 
-fn is_known_model(settings: &AppSettings, model_id: &str) -> bool {
-    known_ids(settings, &settings.custom_models).contains(model_id)
+/// Rejects a selected model unless it belongs to the catalog or custom list.
+pub(super) fn ensure_known_model(
+    settings: &AppSettings,
+    custom_models: &[String],
+    model_id: &str,
+) -> Result<(), SessionError> {
+    if known_ids(settings, custom_models).contains(model_id) {
+        return Ok(());
+    }
+    Err(SessionError::UnknownModel)
+}
+
+fn launch_model_id(settings: &AppSettings) -> String {
+    settings
+        .launch_model_id
+        .clone()
+        .filter(|model_id| known_ids(settings, &settings.custom_models).contains(model_id))
+        .unwrap_or_else(|| settings.aliases.sonnet.clone())
 }
 
 fn known_ids(settings: &AppSettings, custom_models: &[String]) -> HashSet<String> {

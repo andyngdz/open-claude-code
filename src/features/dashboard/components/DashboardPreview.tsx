@@ -24,23 +24,24 @@ const previewSnapshot = {
     sonnet: "qwen3.8-max",
     haiku: "qwen3.8-flash",
   },
+  launchModelId: "qwen3.8-max",
   terminal: TTerminalKind.SystemDefault,
   terminals: [
     { kind: TTerminalKind.SystemDefault, label: "System default", isAvailable: true },
     { kind: TTerminalKind.Ghostty, label: "Ghostty", isAvailable: true },
     { kind: TTerminalKind.GnomeTerminal, label: "GNOME Terminal", isAvailable: false },
   ],
-  lastWorkspace: "/home/andy/Projects/open-claude-code",
+  lastWorkspace: "/workspace/example-project",
   catalogRefreshedAtEpochSeconds: null,
 } satisfies IDashboardSnapshot
 
 export const DashboardPreview: FC = () => {
-  const saveApiKey = async () => {}
+  const saveApiKey = async () => true
   const saveSettings = async (_values: ILaunchForm) => {}
   const launch = async () => {}
 
   return (
-    <DashboardShell pending={TPendingAction.None} snapshot={previewSnapshot} onLaunch={launch}>
+    <DashboardShell>
       <header className="flex flex-col gap-2">
         <p className="text-sm text-muted">OpenCode Go</p>
         <h1 className="text-lg font-semibold">Launch Claude Code</h1>
@@ -48,14 +49,15 @@ export const DashboardPreview: FC = () => {
       <ConnectionSection
         pending={TPendingAction.None}
         snapshot={previewSnapshot}
-        onDisconnect={saveApiKey}
-        onRefresh={saveApiKey}
+        onDisconnect={async () => {}}
+        onRefresh={async () => {}}
         onSaveApiKey={saveApiKey}
       />
       <LaunchSection
         pending={TPendingAction.None}
         snapshot={previewSnapshot}
         onSaveSettings={saveSettings}
+        onLaunch={launch}
       />
     </DashboardShell>
   )

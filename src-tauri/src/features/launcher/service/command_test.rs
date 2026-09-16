@@ -30,10 +30,11 @@ fn gnome_terminal_arguments_keep_paths_as_separate_values() {
     );
 
     assert_eq!(command.program, PathBuf::from("/usr/bin/gnome-terminal"));
-    assert_eq!(command.arguments[1], "/tmp/a workspace");
-    assert_eq!(command.arguments[4], MODEL_ARGUMENT);
+    assert_eq!(command.arguments[0], "--wait");
+    assert_eq!(command.arguments[2], "/tmp/a workspace");
+    assert_eq!(command.arguments[5], MODEL_ARGUMENT);
     assert_eq!(
-        command.arguments[5],
+        command.arguments[6],
         open_code_go_public_model_id("qwen3.8-max")
     );
 }

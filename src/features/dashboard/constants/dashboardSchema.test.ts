@@ -10,6 +10,7 @@ describe("dashboard snapshot", () => {
       models: [{ id: "qwen3.8-max", displayName: "Qwen 3.8 Max", isCustom: false }],
       customModels: [],
       aliases: { fable: "qwen3.8-max", opus: "qwen3.8-max", sonnet: "qwen3.8-max", haiku: "qwen3.8-flash" },
+      launchModelId: "qwen3.8-max",
       terminal: "system_default",
       terminals: [{ kind: "system_default", label: "System default", isAvailable: true }],
       lastWorkspace: null,

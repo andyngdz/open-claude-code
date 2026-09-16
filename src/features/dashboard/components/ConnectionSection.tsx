@@ -14,7 +14,7 @@ import type { ValueChanged } from "@/types"
 interface IConnectionSectionProps {
   snapshot: IDashboardSnapshot
   pending: TPendingAction
-  onSaveApiKey: ValueChanged<string, Promise<void>>
+  onSaveApiKey: ValueChanged<string, Promise<boolean>>
   onDisconnect: () => Promise<void>
   onRefresh: () => Promise<void>
 }

@@ -31,3 +31,19 @@ fn settings_round_trip_preserves_versioned_shape() {
     assert_eq!(parsed.version, 1);
     assert_eq!(parsed.aliases.sonnet, DEFAULT_PRIMARY_MODEL_ID);
 }
+
+#[test]
+fn older_settings_without_a_launch_model_still_load() {
+    let settings = AppSettings::default();
+    let mut serialized =
+        serde_json::to_value(&settings).expect("settings should serialize in a test");
+    serialized
+        .as_object_mut()
+        .expect("settings JSON should be an object")
+        .remove("launchModelId");
+
+    let parsed: AppSettings =
+        serde_json::from_value(serialized).expect("older settings should deserialize in a test");
+
+    assert_eq!(parsed.launch_model_id, None);
+}

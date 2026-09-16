@@ -64,6 +64,7 @@ const isCancelledWorkspace = (selected: unknown) => {
 const settingsInput = (values: ILaunchForm) => {
   return {
     terminal: values.terminal,
+    modelId: values.modelId,
     aliases: {
       fable: values.fable,
       opus: values.opus,

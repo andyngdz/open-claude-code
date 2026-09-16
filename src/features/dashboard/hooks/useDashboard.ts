@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { isString } from "es-toolkit/compat"
 
-import { launchFormDefaults, readCommandError } from "@/features/dashboard/services/dashboardFormatters"
+import { readCommandError } from "@/features/dashboard/services/dashboardFormatters"
 import { dashboardService } from "@/features/dashboard/services/dashboardService"
 import {
   TConnectionStatus,
@@ -26,11 +26,11 @@ type TDashboardState =
 interface IUseDashboardReturn {
   state: TDashboardState
   reload: () => void
-  saveApiKey: ValueChanged<string, Promise<void>>
+  saveApiKey: ValueChanged<string, Promise<boolean>>
   disconnect: () => Promise<void>
   refreshCatalog: () => Promise<void>
   saveSettings: ValueChanged<ILaunchForm, Promise<void>>
-  launch: () => Promise<void>
+  launch: ValueChanged<ILaunchForm, Promise<void>>
 }
 
 export const useDashboard = () => {
@@ -86,7 +86,7 @@ export const useDashboard = () => {
 
   const saveApiKey = useCallback(
     async (apiKey: string) => {
-      await runAction(TPendingAction.SavingKey, () => dashboardService.saveApiKey(apiKey), "API key saved.")
+      return runAction(TPendingAction.SavingKey, () => dashboardService.saveApiKey(apiKey), "API key saved.")
     },
     [runAction],
   )
@@ -118,7 +118,7 @@ export const useDashboard = () => {
     [runAction],
   )
 
-  const launch = useCallback(async () => {
+  const launch = useCallback(async (settings: ILaunchForm) => {
     if (state.status !== TDashboardStatus.Ready) return
     if (state.snapshot.connection.status !== TConnectionStatus.Connected) {
       setState({
@@ -129,7 +129,6 @@ export const useDashboard = () => {
       })
       return
     }
-    const settings = launchFormDefaults(state.snapshot)
     setState({
       status: TDashboardStatus.Ready,
       snapshot: state.snapshot,

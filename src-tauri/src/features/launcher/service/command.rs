@@ -170,6 +170,7 @@ fn ghostty_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> 
 
 fn gnome_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
     vec![
+        "--wait".to_owned(),
         WORKING_DIRECTORY_ARGUMENT.to_owned(),
         workspace.to_owned(),
         "--".to_owned(),

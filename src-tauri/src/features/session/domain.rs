@@ -20,6 +20,8 @@ pub(crate) struct DashboardSnapshot {
     pub(crate) custom_models: Vec<String>,
     /// Claude Code family names mapped to provider models.
     pub(crate) aliases: ModelAliasMapping,
+    /// Model selected for the next launch.
+    pub(crate) launch_model_id: String,
     /// Terminal used for the next launch.
     pub(crate) terminal: TerminalKind,
     /// Terminals this machine can open.

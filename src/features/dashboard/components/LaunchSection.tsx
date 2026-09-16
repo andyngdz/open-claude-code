@@ -4,6 +4,7 @@ import { FormProvider } from "react-hook-form"
 import type { FC } from "react"
 
 import { CustomModelsField } from "@/features/dashboard/components/CustomModelsField"
+import { LaunchOptionsSection } from "@/features/dashboard/components/LaunchOptionsSection"
 import { ModelSelect } from "@/features/dashboard/components/ModelSelect"
 import { TerminalSelect } from "@/features/dashboard/components/TerminalSelect"
 import { ALIAS_LABELS, MODEL_FAMILIES, TModelField } from "@/features/dashboard/constants/dashboardLabels"
@@ -19,12 +20,14 @@ interface ILaunchSectionProps {
   snapshot: IDashboardSnapshot
   pending: TPendingAction
   onSaveSettings: ValueChanged<ILaunchForm, Promise<void>>
+  onLaunch: ValueChanged<ILaunchForm, Promise<void>>
 }
 
 export const LaunchSection: FC<ILaunchSectionProps> = ({
   snapshot,
   pending,
   onSaveSettings,
+  onLaunch,
 }) => {
   const {
     isBusy,
@@ -34,7 +37,8 @@ export const LaunchSection: FC<ILaunchSectionProps> = ({
   } = useLaunchSection(snapshot, pending, onSaveSettings)
 
   return (
-    <Card className="w-full">
+    <>
+      <Card className="w-full">
       <Card.Header>
         <Card.Title>Models</Card.Title>
       </Card.Header>
@@ -67,6 +71,13 @@ export const LaunchSection: FC<ILaunchSectionProps> = ({
           </Form>
         </FormProvider>
       </Card.Content>
-    </Card>
+      </Card>
+      <LaunchOptionsSection
+        canLaunch
+        pending={pending}
+        snapshot={snapshot}
+        onLaunch={async () => methods.handleSubmit(onLaunch)()}
+      />
+    </>
   )
 }

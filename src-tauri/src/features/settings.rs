@@ -1,9 +1,10 @@
 use std::{
-    fs,
+    fs::{self, File, OpenOptions},
     path::{Path, PathBuf},
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 
 use open_claude_code_backend::{
@@ -43,6 +44,8 @@ pub(crate) struct AppSettings {
     pub(crate) terminal: TerminalKind,
     pub(crate) last_workspace: Option<PathBuf>,
     pub(crate) aliases: ModelAliasMapping,
+    #[serde(default)]
+    pub(crate) launch_model_id: Option<String>,
     pub(crate) custom_models: Vec<String>,
     pub(crate) cached_models: Vec<ModelCatalogEntry>,
     pub(crate) catalog_refreshed_at_epoch_seconds: Option<u64>,
@@ -55,6 +58,7 @@ impl Default for AppSettings {
             terminal: TerminalKind::SystemDefault,
             last_workspace: None,
             aliases: ModelAliasMapping::default(),
+            launch_model_id: None,
             custom_models: Vec::new(),
             cached_models: Vec::new(),
             catalog_refreshed_at_epoch_seconds: None,
@@ -67,6 +71,7 @@ impl Default for AppSettings {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SaveProviderSettingsInput {
     pub(crate) terminal: TerminalKind,
+    pub(crate) model_id: String,
     pub(crate) aliases: ModelAliasMapping,
     pub(crate) custom_models: Vec<String>,
 }
@@ -75,6 +80,37 @@ pub(crate) struct SaveProviderSettingsInput {
 #[derive(Clone, Debug)]
 pub(crate) struct SettingsStore {
     path: PathBuf,
+}
+
+/// Holds exclusive ownership of the session files for one desktop process.
+#[derive(Debug)]
+pub(crate) struct InstanceGuard {
+    _lock_file: File,
+}
+
+impl InstanceGuard {
+    /// Acquires the per-user application lock until this process exits.
+    pub(crate) fn acquire(lock_path: &Path) -> Result<Self, SettingsError> {
+        let Some(parent_directory) = lock_path.parent() else {
+            return Err(SettingsError::DirectoryUnavailable);
+        };
+        fs::create_dir_all(parent_directory).map_err(SettingsError::Write)?;
+        let lock_file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(false)
+            .open(lock_path)
+            .map_err(SettingsError::Lock)?;
+        match lock_file.try_lock_exclusive() {
+            Ok(()) => Ok(Self {
+                _lock_file: lock_file,
+            }),
+            Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                Err(SettingsError::InstanceAlreadyRunning)
+            }
+            Err(error) => Err(SettingsError::Lock(error)),
+        }
+    }
 }
 
 impl SettingsStore {
@@ -103,6 +139,11 @@ impl SettingsStore {
     pub(crate) fn runtime_path(&self) -> PathBuf {
         self.path
             .with_file_name(crate::constants::RUNTIME_FILE_NAME)
+    }
+
+    /// Returns the lock file used to prevent concurrent app sessions.
+    pub(crate) fn instance_lock_path(&self) -> PathBuf {
+        self.path.with_file_name("session.lock")
     }
 
     /// Atomically replaces the persisted settings document.

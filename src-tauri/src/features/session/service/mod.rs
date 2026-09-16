@@ -3,8 +3,12 @@ use tokio::sync::Mutex;
 
 use super::{DashboardSnapshot, SessionError};
 use crate::features::{
+    errors::SettingsError,
     launcher::{launch_claude, new_launch_session_id, LaunchClaudeInput, ProcessRegistry},
-    settings::{normalize_custom_models, AppSettings, SaveProviderSettingsInput, SettingsStore},
+    settings::{
+        normalize_custom_models, AppSettings, InstanceGuard, SaveProviderSettingsInput,
+        SettingsStore,
+    },
 };
 
 /// Owns the running gateway, saved settings, and launched terminal processes.
@@ -20,6 +24,7 @@ pub(super) struct AppSessionState {
     pub(super) backend: OpenCodeGoBackend,
     pub(super) settings: AppSettings,
     pub(super) settings_store: SettingsStore,
+    _instance_guard: InstanceGuard,
     processes: ProcessRegistry,
 }
 
@@ -28,6 +33,18 @@ impl AppSession {
     pub(crate) async fn start() -> Result<Self, SessionError> {
         let settings_store =
             SettingsStore::for_application().map_err(|_source| SessionError::Settings)?;
+        let instance_guard =
+            InstanceGuard::acquire(&settings_store.instance_lock_path()).map_err(|error| {
+                match error {
+                    SettingsError::InstanceAlreadyRunning => SessionError::AlreadyRunning,
+                    SettingsError::DirectoryUnavailable
+                    | SettingsError::Read(_)
+                    | SettingsError::Parse(_)
+                    | SettingsError::Serialize(_)
+                    | SettingsError::Write(_)
+                    | SettingsError::Lock(_) => SessionError::Settings,
+                }
+            })?;
         let settings = settings_store
             .load()
             .map_err(|_source| SessionError::Settings)?;
@@ -37,6 +54,7 @@ impl AppSession {
             backend,
             settings,
             settings_store,
+            _instance_guard: instance_guard,
             processes: ProcessRegistry::default(),
         };
         runtime::publish_runtime(&state)?;
@@ -90,7 +108,9 @@ impl AppSession {
         let mut inner = self.inner.lock().await;
         let custom_models = normalize_custom_models(input.custom_models);
         runtime::ensure_known_aliases(&inner.settings, &custom_models, &input.aliases)?;
+        runtime::ensure_known_model(&inner.settings, &custom_models, &input.model_id)?;
         inner.settings.terminal = input.terminal;
+        inner.settings.launch_model_id = Some(input.model_id);
         inner.settings.aliases = input.aliases;
         inner.settings.custom_models = custom_models;
         runtime::save_settings(&inner)?;

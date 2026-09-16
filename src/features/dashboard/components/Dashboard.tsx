@@ -34,11 +34,7 @@ export const Dashboard: FC = () => {
   }
 
   return (
-    <DashboardShell
-      pending={state.pending}
-      snapshot={state.snapshot}
-      onLaunch={dashboard.launch}
-    >
+    <DashboardShell>
       <header className="flex flex-col gap-2">
         <p className="text-sm text-muted">OpenCode Go</p>
         <h1 className="text-lg font-semibold">Launch Claude Code</h1>
@@ -58,6 +54,7 @@ export const Dashboard: FC = () => {
         pending={state.pending}
         snapshot={state.snapshot}
         onSaveSettings={dashboard.saveSettings}
+        onLaunch={dashboard.launch}
       />
       {state.pending !== TPendingAction.None && (
         <DashboardAlert message="Working" status={TDashboardAlertStatus.Accent} />

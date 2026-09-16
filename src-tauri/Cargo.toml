@@ -19,6 +19,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 directories = "6"
+fs2 = "0.4"
 open-claude-code-backend = { path = "../backend" }
 secrecy = "0.10"
 serde = { version = "1", features = ["derive"] }

@@ -1,6 +1,7 @@
 use std::{fs, io::Write, os::unix::fs::OpenOptionsExt, path::Path};
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::features::{errors::RuntimeEndpointError, settings::ModelAliasMapping};
 
@@ -51,14 +52,32 @@ impl RuntimeEndpoint {
 }
 
 fn write_private(path: &Path, bytes: &[u8]) -> Result<(), RuntimeEndpointError> {
+    let temporary_path = path.with_extension(format!("{}.tmp", Uuid::new_v4()));
+    let write_temporary_file = write_private_temporary(&temporary_path, bytes);
+    if let Err(write_error) = write_temporary_file {
+        remove_temporary_file(&temporary_path)?;
+        return Err(write_error);
+    }
+    if let Err(rename_error) = fs::rename(&temporary_path, path) {
+        remove_temporary_file(&temporary_path)?;
+        return Err(RuntimeEndpointError::Write(rename_error));
+    }
+    Ok(())
+}
+
+fn write_private_temporary(path: &Path, bytes: &[u8]) -> Result<(), RuntimeEndpointError> {
     let mut file = fs::OpenOptions::new()
-        .create(true)
+        .create_new(true)
         .write(true)
-        .truncate(true)
         .mode(0o600)
         .open(path)
         .map_err(RuntimeEndpointError::Write)?;
-    file.write_all(bytes).map_err(RuntimeEndpointError::Write)
+    file.write_all(bytes).map_err(RuntimeEndpointError::Write)?;
+    file.sync_all().map_err(RuntimeEndpointError::Write)
+}
+
+fn remove_temporary_file(path: &Path) -> Result<(), RuntimeEndpointError> {
+    fs::remove_file(path).map_err(RuntimeEndpointError::Write)
 }
 
 /// Returns the model id selected by a number, an id, or an empty default line.

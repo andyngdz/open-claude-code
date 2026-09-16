@@ -21,7 +21,7 @@ interface IUseConnectionSectionReturn extends UseFormReturn<IApiKeyForm> {
 export const useConnectionSection = (
   snapshot: IDashboardSnapshot,
   pending: TPendingAction,
-  onSaveApiKey: ValueChanged<string, Promise<void>>,
+  onSaveApiKey: ValueChanged<string, Promise<boolean>>,
 ) => {
   const methods = useForm<IApiKeyForm>({
     resolver: zodResolver(apiKeySchema),
@@ -29,8 +29,8 @@ export const useConnectionSection = (
   })
 
   const onSubmit: SubmitHandler<IApiKeyForm> = async (values) => {
-    await onSaveApiKey(values.apiKey)
-    methods.reset(API_KEY_FORM_DEFAULTS)
+    const saved = await onSaveApiKey(values.apiKey)
+    if (saved) methods.reset(API_KEY_FORM_DEFAULTS)
   }
 
   return {

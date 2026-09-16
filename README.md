@@ -16,9 +16,10 @@ provider and proxy configuration ready for a new Claude Code session.
 
 ## Project status
 
-The Linux desktop app can save an OpenCode Go API key, choose a model and
-workspace, and open Claude Code through a local gateway. System tray controls
-and other providers are not implemented yet.
+The Linux desktop app runs from the system tray, can save an OpenCode Go API
+key, choose a model and workspace, and open Claude Code through a local
+gateway. Closing the settings window keeps the gateway running; choose Quit
+from the tray menu to stop it. Other providers are not implemented yet.
 
 ## Development
 

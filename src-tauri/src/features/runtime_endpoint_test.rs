@@ -70,6 +70,38 @@ fn runtime_file_round_trips_without_a_world_readable_mode() {
     std::fs::remove_dir_all(&directory).unwrap();
 }
 
+#[test]
+fn runtime_file_replaces_a_previous_handshake() {
+    let directory = std::env::temp_dir().join(format!(
+        "open-claude-code-runtime-replace-{}",
+        std::process::id()
+    ));
+    let _ = std::fs::remove_dir_all(&directory);
+    std::fs::create_dir_all(&directory).unwrap();
+    let path = runtime_path_in(&directory);
+    let initial_endpoint = RuntimeEndpoint {
+        base_url: "http://127.0.0.1:9".to_owned(),
+        token: "initial-token".to_owned(),
+        models: sample_models(),
+        aliases: ModelAliasMapping::default(),
+    };
+    let replacement_endpoint = RuntimeEndpoint {
+        base_url: "http://127.0.0.1:10".to_owned(),
+        token: "replacement-token".to_owned(),
+        models: sample_models(),
+        aliases: ModelAliasMapping::default(),
+    };
+
+    initial_endpoint.write(&path).unwrap();
+    replacement_endpoint.write(&path).unwrap();
+
+    let loaded = RuntimeEndpoint::read(&path).unwrap();
+    assert_eq!(loaded.base_url, replacement_endpoint.base_url);
+    assert_eq!(loaded.token, replacement_endpoint.token);
+    RuntimeEndpoint::remove(&path).unwrap();
+    std::fs::remove_dir_all(&directory).unwrap();
+}
+
 fn sample_models() -> Vec<RuntimeModel> {
     vec![
         RuntimeModel {

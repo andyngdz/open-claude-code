@@ -34,18 +34,27 @@ fn probe_payload() -> serde_json::Value {
 /// Calls the public OpenCode Go API.
 #[derive(Clone, Debug)]
 pub(super) struct OpenCodeGoClient {
-    client: Client,
+    control_client: Client,
+    streaming_client: Client,
 }
 
 impl OpenCodeGoClient {
     /// Creates an HTTP client with bounded connection and request timeouts.
     pub(super) fn new() -> Result<Self, ProviderError> {
-        let client = Client::builder()
+        let control_client = Client::builder()
             .connect_timeout(std::time::Duration::from_secs(5))
             .timeout(std::time::Duration::from_secs(30))
             .build()
             .map_err(ProviderError::Request)?;
-        Ok(Self { client })
+        let streaming_client = Client::builder()
+            .connect_timeout(std::time::Duration::from_secs(5))
+            .read_timeout(std::time::Duration::from_secs(60))
+            .build()
+            .map_err(ProviderError::Request)?;
+        Ok(Self {
+            control_client,
+            streaming_client,
+        })
     }
 
     /// Makes a one-token request to prove the credential is accepted.
@@ -54,7 +63,7 @@ impl OpenCodeGoClient {
         api_key: &SecretString,
     ) -> Result<(), ProviderError> {
         let response = self
-            .client
+            .control_client
             .post(MESSAGES_ENDPOINT)
             .header(API_KEY_HEADER, api_key.expose_secret())
             .header("anthropic-version", "2023-06-01")
@@ -76,7 +85,7 @@ impl OpenCodeGoClient {
         api_key: &SecretString,
     ) -> Result<Vec<ModelCatalogEntry>, ProviderError> {
         let response = self
-            .client
+            .control_client
             .get(MODELS_ENDPOINT)
             .header(API_KEY_HEADER, api_key.expose_secret())
             .send()
@@ -104,7 +113,7 @@ impl OpenCodeGoClient {
         request: ProviderRequest,
     ) -> Result<ProviderResponse, ProviderError> {
         let mut upstream_request = self
-            .client
+            .streaming_client
             .post(MESSAGES_ENDPOINT)
             .header(API_KEY_HEADER, api_key.expose_secret())
             .header(USER_AGENT_HEADER, USER_AGENT_VALUE)

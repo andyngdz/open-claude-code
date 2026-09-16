@@ -65,8 +65,9 @@ impl Provider for OpenCodeGoProvider {
         }
         let api_key = SecretString::from(trimmed_api_key.to_owned());
         self.client.validate_api_key(&api_key).await?;
-        self.credentials.save(api_key.clone()).await?;
-        self.client.fetch_catalog(&api_key).await
+        let catalog = self.client.fetch_catalog(&api_key).await?;
+        self.credentials.save(api_key).await?;
+        Ok(catalog)
     }
 
     async fn remove_credential(&self) -> Result<(), ProviderError> {

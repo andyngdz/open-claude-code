@@ -10,6 +10,9 @@ pub(crate) enum SessionError {
     /// Settings could not be loaded or saved.
     #[error("Settings could not be saved. Try again.")]
     Settings,
+    /// Another desktop process already owns the local gateway handshake.
+    #[error("Open Claude Code is already running.")]
+    AlreadyRunning,
     /// A provider or gateway operation failed with a ready-to-show message.
     #[error("{0}")]
     Operation(String),

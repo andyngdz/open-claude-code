@@ -38,7 +38,7 @@ export const connectionLabel = (snapshot: IDashboardSnapshot) => {
 export const launchFormDefaults = (snapshot: IDashboardSnapshot) => {
   return {
     terminal: snapshot.terminal,
-    modelId: snapshot.aliases.sonnet,
+    modelId: snapshot.launchModelId,
     fable: snapshot.aliases.fable,
     opus: snapshot.aliases.opus,
     sonnet: snapshot.aliases.sonnet,
@@ -66,4 +66,3 @@ export const readCommandError = (error: unknown) => {
   if (isError(error)) return error.message
   return "The request failed. Try again."
 }
-

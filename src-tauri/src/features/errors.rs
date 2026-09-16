@@ -3,6 +3,9 @@ use thiserror::Error;
 /// Reports failures while loading or persisting application settings.
 #[derive(Debug, Error)]
 pub(crate) enum SettingsError {
+    /// Another desktop process already owns this application's session files.
+    #[error("Open Claude Code is already running")]
+    InstanceAlreadyRunning,
     /// The operating system did not provide a config directory.
     #[error("settings directory is unavailable")]
     DirectoryUnavailable,
@@ -18,6 +21,9 @@ pub(crate) enum SettingsError {
     /// The settings file could not be written.
     #[error("settings could not be written")]
     Write(#[source] std::io::Error),
+    /// The application ownership lock could not be acquired.
+    #[error("application ownership lock could not be acquired")]
+    Lock(#[source] std::io::Error),
 }
 
 /// Reports failures while reading or writing the private CLI handshake file.

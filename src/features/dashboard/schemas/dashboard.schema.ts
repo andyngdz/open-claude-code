@@ -67,6 +67,7 @@ export const dashboardSnapshotSchema = z.object({
     sonnet: z.string(),
     haiku: z.string(),
   }),
+  launchModelId: z.string(),
   terminal: terminalKindSchema,
   terminals: z.array(terminalOptionSchema),
   lastWorkspace: z.string().nullable(),
