@@ -29,5 +29,9 @@ fn main() -> Result<(), tauri::Error> {
         }
         return Ok(());
     }
+    // NVIDIA Wayland + WebKitGTK exits with Gdk protocol error 71 unless this is set
+    // before the webview opens. https://v2.tauri.app/develop/debug/linux-graphics/
+    #[cfg(target_os = "linux")]
+    std::env::set_var("__NV_DISABLE_EXPLICIT_SYNC", "1");
     open_claude_code_lib::run()
 }
