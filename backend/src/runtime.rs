@@ -50,6 +50,11 @@ impl OpenCodeGoBackend {
         self.provider.connection_state().await
     }
 
+    /// Loads the saved API key for the local desktop settings surface.
+    pub async fn load_saved_api_key(&self) -> Result<Option<SecretString>, OpenCodeGoBackendError> {
+        self.provider.load_saved_api_key().await.map_err(Into::into)
+    }
+
     /// Validates and stores an API key, then returns the current model catalog.
     pub async fn save_api_key(
         &self,

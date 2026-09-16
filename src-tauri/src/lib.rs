@@ -23,6 +23,7 @@ pub fn run() -> Result<(), tauri::Error> {
         })
         .invoke_handler(tauri::generate_handler![
             interface::commands::dashboard_snapshot,
+            interface::commands::saved_api_key,
             interface::commands::save_api_key,
             interface::commands::remove_credential,
             interface::commands::refresh_catalog,

@@ -1,5 +1,12 @@
-import { Dashboard } from "@/features/dashboard/components/Dashboard";
+import { Toast } from "@heroui/react"
+
+import { Dashboard } from "@/features/dashboard/components/Dashboard"
 
 export const App = () => {
-  return <Dashboard />;
-};
+  return (
+    <>
+      <Dashboard />
+      <Toast.Provider placement="bottom end" />
+    </>
+  )
+}

@@ -1,4 +1,5 @@
 use open_claude_code_backend::OpenCodeGoBackend;
+use secrecy::ExposeSecret;
 use tokio::sync::Mutex;
 
 use super::{DashboardSnapshot, SessionError};
@@ -68,6 +69,17 @@ impl AppSession {
     pub(crate) async fn snapshot(&self) -> DashboardSnapshot {
         let inner = self.inner.lock().await;
         runtime::snapshot_from_state(&inner).await
+    }
+
+    /// Loads the saved API key only for the local settings form.
+    pub(crate) async fn saved_api_key(&self) -> Result<String, SessionError> {
+        let inner = self.inner.lock().await;
+        Ok(inner
+            .backend
+            .load_saved_api_key()
+            .await?
+            .map(|api_key| api_key.expose_secret().to_owned())
+            .unwrap_or_default())
     }
 
     /// Validates, stores, and publishes a new API key.

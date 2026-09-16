@@ -47,6 +47,7 @@ export const DashboardPreview: FC = () => {
         <h1 className="text-lg font-semibold">Launch Claude Code</h1>
       </header>
       <ConnectionSection
+        apiKey=""
         pending={TPendingAction.None}
         snapshot={previewSnapshot}
         onDisconnect={async () => {}}

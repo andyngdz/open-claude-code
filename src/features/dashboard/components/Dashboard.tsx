@@ -44,6 +44,7 @@ export const Dashboard: FC = () => {
       )}
       {state.notice && <DashboardAlert message={state.notice} status={TDashboardAlertStatus.Success} />}
       <ConnectionSection
+        apiKey={state.apiKey}
         pending={state.pending}
         snapshot={state.snapshot}
         onDisconnect={dashboard.disconnect}

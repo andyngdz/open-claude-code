@@ -12,6 +12,7 @@ import {
 import type { ValueChanged } from "@/types"
 
 interface IConnectionSectionProps {
+  apiKey: string
   snapshot: IDashboardSnapshot
   pending: TPendingAction
   onSaveApiKey: ValueChanged<string, Promise<boolean>>
@@ -20,6 +21,7 @@ interface IConnectionSectionProps {
 }
 
 export const ConnectionSection: FC<IConnectionSectionProps> = ({
+  apiKey,
   snapshot,
   pending,
   onSaveApiKey,
@@ -28,6 +30,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
 }) => {
   const { isBusy, isConnected, onSubmit, ...methods } = useConnectionSection(
     snapshot,
+    apiKey,
     pending,
     onSaveApiKey,
   )
