@@ -1,0 +1,25 @@
+[package]
+name = "open-claude-code-backend"
+version = "0.1.0"
+edition = "2021"
+description = "Local Claude-compatible gateway for Open Claude Code."
+
+[dependencies]
+async-trait = "0.1"
+axum = "0.8"
+bytes = "1"
+futures-util = "0.3"
+keyring = { version = "3", features = ["sync-secret-service", "crypto-rust"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+secrecy = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "sync", "time"] }
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+indoc = "2"
+
+[lints.rust]
+unsafe_code = "forbid"
