@@ -14,6 +14,10 @@ class DashboardService {
     return dashboardSnapshotSchema.parse(await invoke("dashboard_snapshot"))
   }
 
+  loadSavedApiKey = async (): Promise<string> => {
+    return await invoke("saved_api_key")
+  }
+
   saveApiKey = async (apiKey: string): Promise<IDashboardSnapshot> => {
     return dashboardSnapshotSchema.parse(await invoke("save_api_key", { apiKey }))
   }

@@ -37,6 +37,15 @@ impl OpenCodeGoProvider {
     pub(crate) fn fallback_catalog() -> Vec<ModelCatalogEntry> {
         fallback_catalog()
     }
+
+    /// Loads the saved API key for the local desktop settings surface.
+    pub(crate) async fn load_saved_api_key(&self) -> Result<Option<SecretString>, ProviderError> {
+        match self.credentials.load().await {
+            Ok(api_key) => Ok(Some(api_key)),
+            Err(ProviderError::CredentialNotFound) => Ok(None),
+            Err(source) => Err(source),
+        }
+    }
 }
 
 #[async_trait]

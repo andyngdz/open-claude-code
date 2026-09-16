@@ -1,8 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import type { SubmitHandler, UseFormReturn } from "react-hook-form"
 
-import { API_KEY_FORM_DEFAULTS } from "@/features/dashboard/constants/dashboardDefaults"
+import {
+  API_KEY_FORM_DEFAULTS,
+  apiKeyFormDefaults,
+} from "@/features/dashboard/constants/dashboardDefaults"
 import {
   apiKeySchema,
   TConnectionStatus,
@@ -20,6 +24,7 @@ interface IUseConnectionSectionReturn extends UseFormReturn<IApiKeyForm> {
 
 export const useConnectionSection = (
   snapshot: IDashboardSnapshot,
+  apiKey: string,
   pending: TPendingAction,
   onSaveApiKey: ValueChanged<string, Promise<boolean>>,
 ) => {
@@ -28,9 +33,12 @@ export const useConnectionSection = (
     defaultValues: API_KEY_FORM_DEFAULTS,
   })
 
+  useEffect(() => {
+    methods.reset(apiKeyFormDefaults(apiKey))
+  }, [apiKey, methods])
+
   const onSubmit: SubmitHandler<IApiKeyForm> = async (values) => {
-    const saved = await onSaveApiKey(values.apiKey)
-    if (saved) methods.reset(API_KEY_FORM_DEFAULTS)
+    await onSaveApiKey(values.apiKey)
   }
 
   return {

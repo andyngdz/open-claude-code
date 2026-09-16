@@ -14,6 +14,15 @@ pub(crate) async fn dashboard_snapshot(
     Ok(session.snapshot().await)
 }
 
+/// Returns the saved API key for the local settings form.
+#[tauri::command]
+pub(crate) async fn saved_api_key(session: State<'_, AppSession>) -> Result<String, String> {
+    session
+        .saved_api_key()
+        .await
+        .map_err(|error| error.to_string())
+}
+
 /// Validates and stores an OpenCode Go API key.
 #[tauri::command]
 pub(crate) async fn save_api_key(

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { toast } from "@heroui/react"
 import { isString } from "es-toolkit/compat"
 
 import { readCommandError } from "@/features/dashboard/services/dashboardFormatters"
@@ -18,6 +19,7 @@ type TDashboardState =
   | {
       status: TDashboardStatus.Ready
       snapshot: IDashboardSnapshot
+      apiKey: string
       pending: TPendingAction
       notice?: string
       errorMessage?: string
@@ -40,8 +42,22 @@ export const useDashboard = () => {
   const loadSnapshot = useCallback(async () => {
     setState({ status: TDashboardStatus.Loading })
     try {
-      const snapshot = await dashboardService.loadSnapshot()
-      setState({ status: TDashboardStatus.Ready, snapshot, pending: TPendingAction.None })
+      const [snapshotResult, apiKeyResult] = await Promise.allSettled([
+        dashboardService.loadSnapshot(),
+        dashboardService.loadSavedApiKey(),
+      ])
+      if (snapshotResult.status === "rejected") throw snapshotResult.reason
+
+      const apiKey = apiKeyResult.status === "fulfilled" ? apiKeyResult.value : ""
+      setState({
+        status: TDashboardStatus.Ready,
+        snapshot: snapshotResult.value,
+        apiKey,
+        pending: TPendingAction.None,
+        ...(apiKeyResult.status === "rejected" && {
+          errorMessage: readCommandError(apiKeyResult.reason),
+        }),
+      })
     } catch (error) {
       setState({ status: TDashboardStatus.Failed, message: readCommandError(error) })
     }
@@ -55,11 +71,14 @@ export const useDashboard = () => {
       })
       try {
         const snapshot = await action()
-        setState({
-          status: TDashboardStatus.Ready,
-          snapshot,
-          pending: TPendingAction.None,
-          notice,
+        setState((current) => {
+          if (current.status !== TDashboardStatus.Ready) return current
+          return {
+            ...current,
+            snapshot,
+            pending: TPendingAction.None,
+            notice,
+          }
         })
         return true
       } catch (error) {
@@ -86,17 +105,33 @@ export const useDashboard = () => {
 
   const saveApiKey = useCallback(
     async (apiKey: string) => {
-      return runAction(TPendingAction.SavingKey, () => dashboardService.saveApiKey(apiKey), "API key saved.")
+      const saved = await runAction(
+        TPendingAction.SavingKey,
+        () => dashboardService.saveApiKey(apiKey),
+      )
+      if (saved) {
+        setState((current) => {
+          if (current.status !== TDashboardStatus.Ready) return current
+          return { ...current, apiKey }
+        })
+        toast.success("API key saved.")
+      }
+      return saved
     },
     [runAction],
   )
 
   const disconnect = useCallback(async () => {
-    await runAction(
+    const disconnected = await runAction(
       TPendingAction.Disconnecting,
       () => dashboardService.removeCredential(),
       "API key removed.",
     )
+    if (!disconnected) return
+    setState((current) => {
+      if (current.status !== TDashboardStatus.Ready) return current
+      return { ...current, apiKey: "" }
+    })
   }, [runAction])
 
   const refreshCatalog = useCallback(async () => {
@@ -124,6 +159,7 @@ export const useDashboard = () => {
       setState({
         status: TDashboardStatus.Ready,
         snapshot: state.snapshot,
+        apiKey: state.apiKey,
         pending: TPendingAction.None,
         errorMessage: "Save an OpenCode Go API key before launching.",
       })
@@ -132,6 +168,7 @@ export const useDashboard = () => {
     setState({
       status: TDashboardStatus.Ready,
       snapshot: state.snapshot,
+      apiKey: state.apiKey,
       pending: TPendingAction.Launching,
     })
     let workspace: string | undefined
