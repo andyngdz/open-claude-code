@@ -1,7 +1,5 @@
-import { Dashboard } from "@/features/dashboard/components/Dashboard";
-
-import "./App.css";
+import { DashboardPreview } from "@/features/dashboard/components/DashboardPreview";
 
 export const App = () => {
-  return <Dashboard />;
+  return <DashboardPreview />;
 };

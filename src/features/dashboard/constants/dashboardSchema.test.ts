@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { dashboardSnapshotSchema, parseCustomModels, TConnectionStatus } from "@/features/dashboard/constants/dashboardSchema"
+import { customModelIds } from "@/features/dashboard/services/dashboardFormatters"
+import { dashboardSnapshotSchema, TConnectionStatus } from "@/features/dashboard/schemas/dashboard.schema"
 
 describe("dashboard snapshot", () => {
   it("parses a disconnected snapshot", () => {
@@ -17,7 +18,9 @@ describe("dashboard snapshot", () => {
     expect(snapshot.connection.status).toBe(TConnectionStatus.Disconnected)
   })
 
-  it("trims and drops blank custom model lines", () => {
-    expect(parseCustomModels(" custom-beta \n\ncustom-alpha ")).toEqual(["custom-beta", "custom-alpha"])
+  it("drops blank custom model inputs", () => {
+    expect(
+      customModelIds([{ modelId: " custom-beta " }, { modelId: " " }, { modelId: "custom-alpha" }]),
+    ).toEqual(["custom-beta", "custom-alpha"])
   })
 })

@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api/core"
 
+import { customModelIds } from "@/features/dashboard/services/dashboardFormatters"
 import {
   dashboardSnapshotSchema,
-  parseCustomModels,
   type IDashboardSnapshot,
   type ILaunchForm,
-} from "@/features/dashboard/constants/dashboardSchema"
+} from "@/features/dashboard/schemas/dashboard.schema"
 
 class DashboardService {
   loadSnapshot = async (): Promise<IDashboardSnapshot> => {
@@ -30,17 +30,18 @@ class DashboardService {
     )
   }
 
-  launch = async (values: ILaunchForm): Promise<IDashboardSnapshot> => {
+  launch = async (values: ILaunchForm, workspace: string): Promise<IDashboardSnapshot> => {
     return dashboardSnapshotSchema.parse(
       await invoke("launch_claude_session", {
         input: {
-          workspace: values.workspace,
+          workspace,
           modelId: values.modelId,
         },
       }),
     )
   }
 }
+
 
 const settingsInput = (values: ILaunchForm) => {
   return {
@@ -51,7 +52,7 @@ const settingsInput = (values: ILaunchForm) => {
       sonnet: values.sonnet,
       haiku: values.haiku,
     },
-    customModels: parseCustomModels(values.customModels),
+    customModels: customModelIds(values.customModels),
   }
 }
 

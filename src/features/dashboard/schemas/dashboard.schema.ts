@@ -30,10 +30,16 @@ export enum TPendingAction {
   Launching = "launching",
 }
 
+export const terminalKindSchema = z.enum(TTerminalKind)
+
 const modelSchema = z.object({
   id: z.string(),
   displayName: z.string(),
   isCustom: z.boolean(),
+})
+
+export const customModelFieldSchema = z.object({
+  modelId: z.string(),
 })
 
 const connectionSchema = z.discriminatedUnion("status", [
@@ -46,7 +52,7 @@ const connectionSchema = z.discriminatedUnion("status", [
 ])
 
 const terminalOptionSchema = z.object({
-  kind: z.nativeEnum(TTerminalKind),
+  kind: terminalKindSchema,
   label: z.string(),
   isAvailable: z.boolean(),
 })
@@ -61,7 +67,7 @@ export const dashboardSnapshotSchema = z.object({
     sonnet: z.string(),
     haiku: z.string(),
   }),
-  terminal: z.nativeEnum(TTerminalKind),
+  terminal: terminalKindSchema,
   terminals: z.array(terminalOptionSchema),
   lastWorkspace: z.string().nullable(),
   catalogRefreshedAtEpochSeconds: z.number().nullable(),
@@ -72,37 +78,17 @@ export const apiKeySchema = z.object({
 })
 
 export const launchFormSchema = z.object({
-  terminal: z.nativeEnum(TTerminalKind),
-  workspace: z.string(),
+  terminal: terminalKindSchema,
   modelId: z.string().trim().min(1, "Choose a model."),
   fable: z.string().trim().min(1, "Choose a Fable model."),
   opus: z.string().trim().min(1, "Choose an Opus model."),
   sonnet: z.string().trim().min(1, "Choose a Sonnet model."),
   haiku: z.string().trim().min(1, "Choose a Haiku model."),
-  customModels: z.string(),
+  customModels: z.array(customModelFieldSchema),
 })
 
 export type IDashboardSnapshot = z.infer<typeof dashboardSnapshotSchema>
 export type IApiKeyForm = z.infer<typeof apiKeySchema>
 export type ILaunchForm = z.infer<typeof launchFormSchema>
 export type IModelOption = z.infer<typeof modelSchema>
-
-export const parseCustomModels = (value: string) => {
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line)
-}
-
-export const ALIAS_LABELS = {
-  fable: "Fable",
-  opus: "Opus",
-  sonnet: "Sonnet",
-  haiku: "Haiku",
-} as const
-
-export const connectionLabel = (snapshot: IDashboardSnapshot) => {
-  if (snapshot.connection.status === TConnectionStatus.Connected) return "Connected"
-  if (snapshot.connection.status === TConnectionStatus.Failed) return snapshot.connection.message
-  return "Not connected"
-}
+export type ICustomModelField = z.infer<typeof customModelFieldSchema>

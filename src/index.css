@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+html.dark,
+html[data-theme="dark"] {
+  --field-border-width: 1px;
+  --field-border: var(--muted);
+  --field-border-hover: var(--foreground);
+  --field-border-focus: var(--focus);
+  --field-background: var(--background);
+}
+
+@layer components {
+  .app-frame {
+    @apply flex min-h-screen flex-col bg-background text-foreground md:flex-row;
+  }
+
+  .app-sidebar {
+    @apply w-full shrink-0 border-b border-border p-3 md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-r md:border-b-0;
+  }
+
+  .app-shell {
+    @apply mx-auto w-full max-w-2xl p-4;
+  }
+
+  .app-stack {
+    @apply flex flex-col gap-4;
+  }
+}

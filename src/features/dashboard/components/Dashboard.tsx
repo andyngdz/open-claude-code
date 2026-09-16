@@ -1,9 +1,13 @@
+import { Button } from "@heroui/react"
 import type { FC } from "react"
 
-import { TDashboardStatus, TPendingAction } from "@/features/dashboard/constants/dashboardSchema"
-import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
 import { ConnectionSection } from "@/features/dashboard/components/ConnectionSection"
+import { DashboardShell } from "@/features/dashboard/components/DashboardShell"
 import { LaunchSection } from "@/features/dashboard/components/LaunchSection"
+import { TDashboardAlertStatus } from "@/features/dashboard/constants/dashboardLabels"
+import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
+import { DashboardAlert } from "@/features/dashboard/presentations/DashboardAlert"
+import { TDashboardStatus, TPendingAction } from "@/features/dashboard/schemas/dashboard.schema"
 
 export const Dashboard: FC = () => {
   const dashboard = useDashboard()
@@ -11,48 +15,53 @@ export const Dashboard: FC = () => {
 
   if (state.status === TDashboardStatus.Loading) {
     return (
-      <main className="app-shell">
-        <p>Loading settings</p>
-      </main>
+      <DashboardShell>
+        <p className="text-sm text-muted">Loading settings</p>
+      </DashboardShell>
     )
   }
 
   if (state.status === TDashboardStatus.Failed) {
     return (
-      <main className="app-shell">
-        <section className="panel">
-          <h1>Launch Claude Code</h1>
-          <p role="alert">{state.message}</p>
-          <button type="button" onClick={dashboard.reload}>
-            Try again
-          </button>
-        </section>
-      </main>
+      <DashboardShell>
+        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+        <DashboardAlert message={state.message} status={TDashboardAlertStatus.Danger} />
+        <Button type="button" onPress={dashboard.reload}>
+          Try again
+        </Button>
+      </DashboardShell>
     )
   }
 
   return (
-    <main className="app-shell">
-      <header className="page-heading">
-        <p>OpenCode Go</p>
-        <h1>Launch Claude Code</h1>
+    <DashboardShell
+      pending={state.pending}
+      snapshot={state.snapshot}
+      onLaunch={dashboard.launch}
+    >
+      <header className="flex flex-col gap-2">
+        <p className="text-sm text-muted">OpenCode Go</p>
+        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
       </header>
-      {state.errorMessage && <p role="alert">{state.errorMessage}</p>}
-      {state.notice && <p role="status">{state.notice}</p>}
+      {state.errorMessage && (
+        <DashboardAlert message={state.errorMessage} status={TDashboardAlertStatus.Danger} />
+      )}
+      {state.notice && <DashboardAlert message={state.notice} status={TDashboardAlertStatus.Success} />}
       <ConnectionSection
-        snapshot={state.snapshot}
         pending={state.pending}
-        onSave={dashboard.saveApiKey}
+        snapshot={state.snapshot}
         onDisconnect={dashboard.disconnect}
         onRefresh={dashboard.refreshCatalog}
+        onSaveApiKey={dashboard.saveApiKey}
       />
       <LaunchSection
-        snapshot={state.snapshot}
         pending={state.pending}
+        snapshot={state.snapshot}
         onSaveSettings={dashboard.saveSettings}
-        onLaunch={dashboard.launch}
       />
-      {state.pending !== TPendingAction.None && <p role="status">Working</p>}
-    </main>
+      {state.pending !== TPendingAction.None && (
+        <DashboardAlert message="Working" status={TDashboardAlertStatus.Accent} />
+      )}
+    </DashboardShell>
   )
 }

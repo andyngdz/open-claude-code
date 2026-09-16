@@ -1,19 +1,20 @@
-import type { SubmitHandler } from "react-hook-form"
+import { Button, Card, Form } from "@heroui/react"
+import { FormProvider } from "react-hook-form"
 import type { FC } from "react"
 
+import { ApiKeyField } from "@/features/dashboard/components/ApiKeyField"
+import { useConnectionSection } from "@/features/dashboard/hooks/useConnectionSection"
+import { connectionLabel } from "@/features/dashboard/services/dashboardFormatters"
 import {
-  TConnectionStatus,
   TPendingAction,
-  connectionLabel,
-  type IApiKeyForm,
   type IDashboardSnapshot,
-} from "@/features/dashboard/constants/dashboardSchema"
-import { useApiKeyForm } from "@/features/dashboard/hooks/useApiKeyForm"
+} from "@/features/dashboard/schemas/dashboard.schema"
+import type { ValueChanged } from "@/types"
 
 interface IConnectionSectionProps {
   snapshot: IDashboardSnapshot
   pending: TPendingAction
-  onSave: (apiKey: string) => Promise<void>
+  onSaveApiKey: ValueChanged<string, Promise<void>>
   onDisconnect: () => Promise<void>
   onRefresh: () => Promise<void>
 }
@@ -21,44 +22,58 @@ interface IConnectionSectionProps {
 export const ConnectionSection: FC<IConnectionSectionProps> = ({
   snapshot,
   pending,
-  onSave,
+  onSaveApiKey,
   onDisconnect,
   onRefresh,
 }) => {
-  const { register, handleSubmit, reset, formState } = useApiKeyForm()
-  const isBusy = pending !== TPendingAction.None
-  const isConnected = snapshot.connection.status === TConnectionStatus.Connected
-  const onSubmit: SubmitHandler<IApiKeyForm> = async (values) => {
-    await onSave(values.apiKey)
-    reset()
-  }
+  const { isBusy, isConnected, onSubmit, ...methods } = useConnectionSection(
+    snapshot,
+    pending,
+    onSaveApiKey,
+  )
 
   return (
-    <section className="panel" aria-labelledby="connection-heading">
-      <div className="panel-heading">
-        <h2 id="connection-heading">Connection</h2>
-        <p>{connectionLabel(snapshot)}</p>
-      </div>
-      <form className="stack" onSubmit={handleSubmit(onSubmit)}>
-        <label className="field" htmlFor="api-key">
-          <span>API key</span>
-          <input id="api-key" type="password" autoComplete="off" {...register("apiKey")} />
-          {formState.errors.apiKey?.message && (
-            <span role="alert">{formState.errors.apiKey.message}</span>
-          )}
-        </label>
-        <div className="actions">
-          <button type="submit" disabled={isBusy}>
-            {pending === TPendingAction.SavingKey ? "Saving" : "Save API key"}
-          </button>
-          <button type="button" onClick={() => void onRefresh()} disabled={!isConnected || isBusy}>
-            {pending === TPendingAction.Refreshing ? "Refreshing" : "Refresh models"}
-          </button>
-          <button type="button" onClick={() => void onDisconnect()} disabled={!isConnected || isBusy}>
-            {pending === TPendingAction.Disconnecting ? "Removing" : "Disconnect"}
-          </button>
-        </div>
-      </form>
-    </section>
+    <Card className="w-full">
+      <Card.Header>
+        <Card.Title>Connection</Card.Title>
+        <Card.Description>{connectionLabel(snapshot)}</Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <FormProvider {...methods}>
+          <Form onSubmit={methods.handleSubmit(onSubmit)}>
+            <div className="flex flex-col gap-4">
+              <ApiKeyField />
+              <div className="flex flex-wrap gap-2">
+                <Button isDisabled={isBusy} isPending={pending === TPendingAction.SavingKey} type="submit">
+                  {pending === TPendingAction.SavingKey ? "Saving" : "Save API key"}
+                </Button>
+<Button
+                isDisabled={!isConnected || isBusy}
+                isPending={pending === TPendingAction.Refreshing}
+                  type="button"
+                  variant="secondary"
+                  onPress={() => {
+                    void onRefresh()
+                  }}
+                >
+                  {pending === TPendingAction.Refreshing ? "Refreshing" : "Refresh models"}
+                </Button>
+<Button
+                isDisabled={!isConnected || isBusy}
+                isPending={pending === TPendingAction.Disconnecting}
+                  type="button"
+                  variant="danger"
+                  onPress={() => {
+                    void onDisconnect()
+                  }}
+                >
+                  {pending === TPendingAction.Disconnecting ? "Removing" : "Disconnect"}
+                </Button>
+              </div>
+            </div>
+          </Form>
+        </FormProvider>
+      </Card.Content>
+    </Card>
   )
 }

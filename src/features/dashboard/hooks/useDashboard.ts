@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 
+import { readCommandError } from "@/features/dashboard/services/dashboardFormatters"
+import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
+import { dashboardService } from "@/features/dashboard/services/dashboardService"
 import {
   TDashboardStatus,
   TPendingAction,
   type IDashboardSnapshot,
   type ILaunchForm,
-} from "@/features/dashboard/constants/dashboardSchema"
-import { dashboardService } from "@/features/dashboard/services/dashboardService"
+} from "@/features/dashboard/schemas/dashboard.schema"
+import type { ValueChanged } from "@/types"
 
 type TDashboardState =
   | { status: TDashboardStatus.Loading }
@@ -22,17 +25,11 @@ type TDashboardState =
 interface IUseDashboardReturn {
   state: TDashboardState
   reload: () => void
-  saveApiKey: (apiKey: string) => Promise<void>
+  saveApiKey: ValueChanged<string, Promise<void>>
   disconnect: () => Promise<void>
   refreshCatalog: () => Promise<void>
-  saveSettings: (values: ILaunchForm) => Promise<void>
-  launch: (values: ILaunchForm) => Promise<void>
-}
-
-const readCommandError = (error: unknown) => {
-  if (typeof error === "string") return error
-  if (error instanceof Error) return error.message
-  return "The request failed. Try again."
+  saveSettings: ValueChanged<ILaunchForm, Promise<void>>
+  launch: ValueChanged<IClaudeLaunch, Promise<void>>
 }
 
 export const useDashboard = () => {
@@ -121,13 +118,17 @@ export const useDashboard = () => {
   )
 
   const launch = useCallback(
-    async (values: ILaunchForm) => {
+    async (request: IClaudeLaunch) => {
       const saved = await runAction(
         TPendingAction.SavingSettings,
-        () => dashboardService.saveSettings(values),
+        () => dashboardService.saveSettings(request.settings),
       )
       if (!saved) return
-      await runAction(TPendingAction.Launching, () => dashboardService.launch(values), "Claude Code opened.")
+      await runAction(
+        TPendingAction.Launching,
+        () => dashboardService.launch(request.settings, request.workspace),
+        "Claude Code opened.",
+      )
     },
     [runAction],
   )
