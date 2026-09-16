@@ -1,4 +1,9 @@
-use std::{path::Path, path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+    thread,
+    time::Duration,
+};
 
 use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
@@ -16,6 +21,8 @@ use crate::features::{
 const MODEL_ARGUMENT: &str = crate::constants::MODEL_FLAG;
 const EXECUTE_ARGUMENT: &str = "-e";
 const WORKING_DIRECTORY_ARGUMENT: &str = "--working-directory";
+const GHOSTTY_OWN_WINDOW: &str = "--gtk-single-instance=false";
+const TERMINAL_START_GRACE: Duration = Duration::from_millis(700);
 
 /// Spawns Claude Code in the configured terminal with proxy-only credentials.
 pub(crate) fn launch_claude(
@@ -32,13 +39,14 @@ pub(crate) fn launch_claude(
     }
     let claude_path = claude_executable()?;
     let command_spec = resolve_command_spec(terminal, workspace, &claude_path, model_id)?;
-    let child = spawn_terminal(
+    let mut child = spawn_terminal(
         &command_spec,
         workspace,
         proxy_base_url,
         proxy_token,
         aliases,
     )?;
+    ensure_terminal_stayed_open(&mut child)?;
     let process_id = child.id();
     registry.register(child)?;
 
@@ -140,8 +148,18 @@ fn command_spec_for_terminal(
     }
 }
 
+fn ensure_terminal_stayed_open(child: &mut std::process::Child) -> Result<(), LauncherError> {
+    thread::sleep(TERMINAL_START_GRACE);
+    match child.try_wait() {
+        Ok(Some(_status)) => Err(LauncherError::TerminalExited),
+        Ok(None) => Ok(()),
+        Err(source) => Err(LauncherError::Spawn(source)),
+    }
+}
+
 fn ghostty_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
     vec![
+        GHOSTTY_OWN_WINDOW.to_owned(),
         format!("{WORKING_DIRECTORY_ARGUMENT}={workspace}"),
         EXECUTE_ARGUMENT.to_owned(),
         claude.to_owned(),

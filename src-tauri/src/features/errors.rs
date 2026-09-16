@@ -55,6 +55,9 @@ pub(crate) enum LauncherError {
     /// The operating system rejected the process spawn.
     #[error("the terminal process could not be started")]
     Spawn(#[source] std::io::Error),
+    /// The terminal process exited before Claude Code stayed open.
+    #[error("the terminal closed immediately")]
+    TerminalExited,
     /// The process registry lock was poisoned.
     #[error("the terminal process registry is unavailable")]
     RegistryUnavailable,

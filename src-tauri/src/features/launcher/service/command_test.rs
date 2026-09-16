@@ -2,8 +2,22 @@ use std::path::{Path, PathBuf};
 
 use open_claude_code_backend::open_code_go_public_model_id;
 
-use super::{command_spec_for_terminal, MODEL_ARGUMENT};
+use super::{command_spec_for_terminal, GHOSTTY_OWN_WINDOW, MODEL_ARGUMENT};
 use crate::features::launcher::TerminalKind;
+
+#[test]
+fn ghostty_opens_its_own_window() {
+    let command = command_spec_for_terminal(
+        TerminalKind::Ghostty,
+        PathBuf::from("/usr/bin/ghostty"),
+        Path::new("/tmp/project"),
+        Path::new("/usr/bin/claude"),
+        "qwen3.8-max",
+    );
+
+    assert_eq!(command.arguments[0], GHOSTTY_OWN_WINDOW);
+    assert_eq!(command.arguments[3], "/usr/bin/claude");
+}
 
 #[test]
 fn gnome_terminal_arguments_keep_paths_as_separate_values() {

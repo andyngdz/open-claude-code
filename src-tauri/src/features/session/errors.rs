@@ -25,6 +25,9 @@ pub(crate) enum SessionError {
     /// The operating system rejected the spawn.
     #[error("The terminal could not be opened. Try again.")]
     Spawn,
+    /// The terminal window closed before Claude Code stayed open.
+    #[error("The terminal closed immediately. Check that Claude Code can start, then try again.")]
+    TerminalExited,
     /// A previous process could not be tracked.
     #[error("A previous terminal could not be tracked. Try again.")]
     RegistryUnavailable,
@@ -52,6 +55,7 @@ impl From<LauncherError> for SessionError {
             LauncherError::ClaudeNotFound => Self::ClaudeNotFound,
             LauncherError::TerminalNotFound => Self::TerminalNotFound,
             LauncherError::Spawn(_source) => Self::Spawn,
+            LauncherError::TerminalExited => Self::TerminalExited,
             LauncherError::RegistryUnavailable => Self::RegistryUnavailable,
         }
     }
