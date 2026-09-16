@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
+import { isString } from "es-toolkit/compat"
 
-import { readCommandError } from "@/features/dashboard/services/dashboardFormatters"
-import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
+import { launchFormDefaults, readCommandError } from "@/features/dashboard/services/dashboardFormatters"
 import { dashboardService } from "@/features/dashboard/services/dashboardService"
 import {
+  TConnectionStatus,
   TDashboardStatus,
   TPendingAction,
   type IDashboardSnapshot,
@@ -29,7 +30,7 @@ interface IUseDashboardReturn {
   disconnect: () => Promise<void>
   refreshCatalog: () => Promise<void>
   saveSettings: ValueChanged<ILaunchForm, Promise<void>>
-  launch: ValueChanged<IClaudeLaunch, Promise<void>>
+  launch: () => Promise<void>
 }
 
 export const useDashboard = () => {
@@ -117,21 +118,59 @@ export const useDashboard = () => {
     [runAction],
   )
 
-  const launch = useCallback(
-    async (request: IClaudeLaunch) => {
-      const saved = await runAction(
-        TPendingAction.SavingSettings,
-        () => dashboardService.saveSettings(request.settings),
-      )
-      if (!saved) return
-      await runAction(
-        TPendingAction.Launching,
-        () => dashboardService.launch(request.settings, request.workspace),
-        "Claude Code opened.",
-      )
-    },
-    [runAction],
-  )
+  const launch = useCallback(async () => {
+    if (state.status !== TDashboardStatus.Ready) return
+    if (state.snapshot.connection.status !== TConnectionStatus.Connected) {
+      setState({
+        status: TDashboardStatus.Ready,
+        snapshot: state.snapshot,
+        pending: TPendingAction.None,
+        errorMessage: "Save an OpenCode Go API key before launching.",
+      })
+      return
+    }
+    const settings = launchFormDefaults(state.snapshot)
+    setState({
+      status: TDashboardStatus.Ready,
+      snapshot: state.snapshot,
+      pending: TPendingAction.Launching,
+    })
+    let workspace: string | undefined
+    try {
+      const lastWorkspace = state.snapshot.lastWorkspace
+      if (isString(lastWorkspace)) {
+        workspace = await dashboardService.chooseWorkspace(lastWorkspace)
+      } else {
+        workspace = await dashboardService.chooseWorkspace()
+      }
+    } catch (error) {
+      const message = readCommandError(error)
+      setState((current) => {
+        if (current.status !== TDashboardStatus.Ready) {
+          return { status: TDashboardStatus.Failed, message }
+        }
+        return { ...current, pending: TPendingAction.None, errorMessage: message }
+      })
+      return
+    }
+    if (!workspace) {
+      setState((current) => {
+        if (current.status !== TDashboardStatus.Ready) return current
+        return { ...current, pending: TPendingAction.None }
+      })
+      return
+    }
+    const saved = await runAction(
+      TPendingAction.SavingSettings,
+      () => dashboardService.saveSettings(settings),
+    )
+    if (!saved) return
+    await runAction(
+      TPendingAction.Launching,
+      () => dashboardService.launch(settings, workspace),
+      "Claude Code opened.",
+    )
+  }, [runAction, state])
 
   return {
     state,

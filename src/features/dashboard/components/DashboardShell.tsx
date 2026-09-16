@@ -3,16 +3,14 @@ import type { FC, ReactNode } from "react"
 
 import { ProviderPanel } from "@/features/dashboard/components/ProviderPanel"
 import { TProviderId } from "@/features/dashboard/constants/dashboardProviders"
-import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
 import { ProviderSidebar } from "@/features/dashboard/presentations/ProviderSidebar"
 import { TPendingAction, type IDashboardSnapshot } from "@/features/dashboard/schemas/dashboard.schema"
-import type { ValueChanged } from "@/types"
 
 interface IDashboardShellProps {
   children: ReactNode
   snapshot?: IDashboardSnapshot
   pending?: TPendingAction
-  onLaunch?: ValueChanged<IClaudeLaunch, Promise<void>>
+  onLaunch?: () => Promise<void>
 }
 
 export const DashboardShell: FC<IDashboardShellProps> = ({

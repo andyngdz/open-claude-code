@@ -2,16 +2,14 @@ import { Button, Card } from "@heroui/react"
 import type { FC } from "react"
 
 import { useLaunchOptionsSection } from "@/features/dashboard/hooks/useLaunchOptionsSection"
-import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
 import { LaunchCommandField } from "@/features/dashboard/presentations/LaunchCommandField"
 import { TPendingAction, type IDashboardSnapshot } from "@/features/dashboard/schemas/dashboard.schema"
-import type { ValueChanged } from "@/types"
 
 interface ILaunchOptionsSectionProps {
   snapshot: IDashboardSnapshot
   pending: TPendingAction
   canLaunch: boolean
-  onLaunch: ValueChanged<IClaudeLaunch, Promise<void>>
+  onLaunch: () => Promise<void>
 }
 
 export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({

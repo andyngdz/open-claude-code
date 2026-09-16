@@ -7,17 +7,15 @@ import {
   TProviderId,
   providerUnavailableCopy,
 } from "@/features/dashboard/constants/dashboardProviders"
-import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
 import { ProviderUnavailable } from "@/features/dashboard/presentations/ProviderUnavailable"
 import { TPendingAction, type IDashboardSnapshot } from "@/features/dashboard/schemas/dashboard.schema"
-import type { ValueChanged } from "@/types"
 
 interface IProviderPanelProps {
   provider: TProviderId
   children: ReactNode
   snapshot?: IDashboardSnapshot
   pending?: TPendingAction
-  onLaunch?: ValueChanged<IClaudeLaunch, Promise<void>>
+  onLaunch?: () => Promise<void>
 }
 
 export const ProviderPanel: FC<IProviderPanelProps> = ({

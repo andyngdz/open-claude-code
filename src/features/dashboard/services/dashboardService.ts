@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core"
+import { open } from "@tauri-apps/plugin-dialog"
+import { isNull, isString, isUndefined } from "es-toolkit/compat"
 
 import { customModelIds } from "@/features/dashboard/services/dashboardFormatters"
 import {
@@ -30,6 +32,18 @@ class DashboardService {
     )
   }
 
+  chooseWorkspace = async (lastWorkspace?: string): Promise<string | undefined> => {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: "Choose folder",
+      ...(isString(lastWorkspace) ? { defaultPath: lastWorkspace } : {}),
+    })
+    if (isCancelledWorkspace(selected)) return
+    if (!isString(selected)) throw new Error("Choose a workspace directory.")
+    return selected
+  }
+
   launch = async (values: ILaunchForm, workspace: string): Promise<IDashboardSnapshot> => {
     return dashboardSnapshotSchema.parse(
       await invoke("launch_claude_session", {
@@ -42,6 +56,10 @@ class DashboardService {
   }
 }
 
+
+const isCancelledWorkspace = (selected: unknown) => {
+  return isNull(selected) || isUndefined(selected)
+}
 
 const settingsInput = (values: ILaunchForm) => {
   return {

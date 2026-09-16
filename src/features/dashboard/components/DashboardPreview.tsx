@@ -10,7 +10,6 @@ import {
   type IDashboardSnapshot,
   type ILaunchForm,
 } from "@/features/dashboard/schemas/dashboard.schema"
-import type { IClaudeLaunch } from "@/features/dashboard/interfaces/dashboardService"
 
 const previewSnapshot = {
   connection: { status: TConnectionStatus.Connected },
@@ -38,7 +37,7 @@ const previewSnapshot = {
 export const DashboardPreview: FC = () => {
   const saveApiKey = async () => {}
   const saveSettings = async (_values: ILaunchForm) => {}
-  const launch = async (_request: IClaudeLaunch) => {}
+  const launch = async () => {}
 
   return (
     <DashboardShell pending={TPendingAction.None} snapshot={previewSnapshot} onLaunch={launch}>
