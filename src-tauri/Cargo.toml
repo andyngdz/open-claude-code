@@ -17,6 +17,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
 directories = "6"
 open-claude-code-backend = { path = "../backend" }
 secrecy = "0.10"

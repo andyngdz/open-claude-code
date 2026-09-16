@@ -4,6 +4,7 @@ use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
 use super::discovery::{concrete_terminals, find_executable, XDG_TERMINAL_EXECUTABLE};
+use super::proxy::{apply_proxy_env, claude_executable, claude_proxy_env};
 use open_claude_code_backend::open_code_go_public_model_id;
 
 use crate::features::{
@@ -12,8 +13,7 @@ use crate::features::{
     settings::{is_workspace_directory, ModelAliasMapping},
 };
 
-const CLAUDE_EXECUTABLE: &str = "claude";
-const MODEL_ARGUMENT: &str = "--model";
+const MODEL_ARGUMENT: &str = crate::constants::MODEL_FLAG;
 const EXECUTE_ARGUMENT: &str = "-e";
 const WORKING_DIRECTORY_ARGUMENT: &str = "--working-directory";
 
@@ -30,7 +30,7 @@ pub(crate) fn launch_claude(
     if !is_workspace_directory(workspace) {
         return Err(LauncherError::InvalidWorkspace);
     }
-    let claude_path = find_executable(CLAUDE_EXECUTABLE).ok_or(LauncherError::ClaudeNotFound)?;
+    let claude_path = claude_executable()?;
     let command_spec = resolve_command_spec(terminal, workspace, &claude_path, model_id)?;
     let child = spawn_terminal(
         &command_spec,
@@ -63,30 +63,11 @@ fn spawn_terminal(
     proxy_token: &SecretString,
     aliases: &ModelAliasMapping,
 ) -> Result<std::process::Child, LauncherError> {
-    Command::new(&command_spec.program)
-        .args(&command_spec.arguments)
-        .current_dir(workspace)
-        .env("ANTHROPIC_BASE_URL", proxy_base_url)
-        .env("ANTHROPIC_AUTH_TOKEN", proxy_token.expose_secret())
-        .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
-        .env(
-            "ANTHROPIC_DEFAULT_FABLE_MODEL",
-            open_code_go_public_model_id(&aliases.fable),
-        )
-        .env(
-            "ANTHROPIC_DEFAULT_OPUS_MODEL",
-            open_code_go_public_model_id(&aliases.opus),
-        )
-        .env(
-            "ANTHROPIC_DEFAULT_SONNET_MODEL",
-            open_code_go_public_model_id(&aliases.sonnet),
-        )
-        .env(
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL",
-            open_code_go_public_model_id(&aliases.haiku),
-        )
-        .spawn()
-        .map_err(LauncherError::Spawn)
+    let proxy_env = claude_proxy_env(proxy_base_url, proxy_token.expose_secret(), aliases);
+    let mut command = Command::new(&command_spec.program);
+    command.args(&command_spec.arguments).current_dir(workspace);
+    apply_proxy_env(&mut command, &proxy_env);
+    command.spawn().map_err(LauncherError::Spawn)
 }
 
 fn resolve_command_spec(

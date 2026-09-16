@@ -20,6 +20,26 @@ pub(crate) enum SettingsError {
     Write(#[source] std::io::Error),
 }
 
+/// Reports failures while reading or writing the private CLI handshake file.
+#[derive(Debug, Error)]
+pub(crate) enum RuntimeEndpointError {
+    /// The config directory could not be created.
+    #[error("settings directory is unavailable")]
+    DirectoryUnavailable,
+    /// The handshake file could not be read.
+    #[error("runtime file could not be read")]
+    Read(#[source] std::io::Error),
+    /// The handshake file is not the expected JSON.
+    #[error("runtime file is invalid")]
+    Parse(#[source] serde_json::Error),
+    /// The handshake file could not be serialized.
+    #[error("runtime file could not be serialized")]
+    Serialize(#[source] serde_json::Error),
+    /// The handshake file could not be written.
+    #[error("runtime file could not be written")]
+    Write(#[source] std::io::Error),
+}
+
 /// Reports failures while building or spawning a Claude Code terminal process.
 #[derive(Debug, Error)]
 pub(crate) enum LauncherError {

@@ -1,9 +1,13 @@
+mod constants;
 mod features;
 mod interface;
 
 use tauri::{Manager, RunEvent};
 
 use crate::features::session::AppSession;
+
+/// Application name shared by the tray, CLI, and config directory.
+pub const APP_NAME: &str = crate::constants::APP_NAME;
 
 /// Runs the desktop application until its event loop exits.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,6 +18,7 @@ pub fn run() -> Result<(), tauri::Error> {
             let session = tauri::async_runtime::block_on(AppSession::start())
                 .map_err(|error| startup_failure(error.to_string()))?;
             app.manage(session);
+            crate::interface::tray::install(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -34,6 +39,11 @@ pub fn run() -> Result<(), tauri::Error> {
             }
         });
     Ok(())
+}
+
+/// Runs `launch` in the current terminal without opening the settings window.
+pub fn run_launch(model: Option<String>) -> Result<(), String> {
+    crate::features::terminal_launch::launch(model).map_err(|error| error.to_string())
 }
 
 /// Converts a session startup message into the error Tauri shows while opening.

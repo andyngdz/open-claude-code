@@ -81,7 +81,7 @@ impl SettingsStore {
     /// Creates the settings store for this application.
     pub(crate) fn for_application() -> Result<Self, SettingsError> {
         let project_directories =
-            directories::ProjectDirs::from("dev", "andyng", "open-claude-code")
+            directories::ProjectDirs::from("dev", "andyng", crate::constants::APP_NAME)
                 .ok_or(SettingsError::DirectoryUnavailable)?;
 
         Ok(Self {
@@ -97,6 +97,12 @@ impl SettingsStore {
 
         let serialized = fs::read_to_string(&self.path).map_err(SettingsError::Read)?;
         serde_json::from_str(&serialized).map_err(SettingsError::Parse)
+    }
+
+    /// Returns the private file the CLI reads while this app is running.
+    pub(crate) fn runtime_path(&self) -> PathBuf {
+        self.path
+            .with_file_name(crate::constants::RUNTIME_FILE_NAME)
     }
 
     /// Atomically replaces the persisted settings document.
