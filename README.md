@@ -16,4 +16,20 @@ provider and proxy configuration ready for a new Claude Code session.
 
 ## Project status
 
-This project is in the planning stage. There is no runnable build yet.
+The Tauri application shell is initialized. Provider configuration, the local
+proxy, system tray controls, and terminal launching are not implemented yet.
+
+## Development
+
+Install dependencies and start the desktop app:
+
+```sh
+pnpm install
+pnpm tauri dev
+```
+
+Build the desktop binary without packaging an installer:
+
+```sh
+pnpm tauri build --debug --no-bundle
+```
