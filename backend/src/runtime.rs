@@ -55,13 +55,10 @@ impl OpenCodeGoBackend {
         self.provider.load_saved_api_key().await.map_err(Into::into)
     }
 
-    /// Validates and stores an API key, then returns the current model catalog.
-    pub async fn save_api_key(
-        &self,
-        api_key: &str,
-    ) -> Result<Vec<ModelCatalogEntry>, OpenCodeGoBackendError> {
+    /// Stores an API key locally without contacting OpenCode Go.
+    pub async fn save_api_key(&self, api_key: &str) -> Result<(), OpenCodeGoBackendError> {
         self.provider
-            .save_and_test_api_key(api_key)
+            .save_api_key(api_key)
             .await
             .map_err(Into::into)
     }

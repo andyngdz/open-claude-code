@@ -22,11 +22,8 @@ impl Provider for FakeProvider {
         ProviderConnectionState::Disconnected
     }
 
-    async fn save_and_test_api_key(
-        &self,
-        _api_key: &str,
-    ) -> Result<Vec<ModelCatalogEntry>, ProviderError> {
-        Ok(Vec::new())
+    async fn save_api_key(&self, _api_key: &str) -> Result<(), ProviderError> {
+        Ok(())
     }
 
     async fn remove_credential(&self) -> Result<(), ProviderError> {

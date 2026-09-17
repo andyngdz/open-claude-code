@@ -21,7 +21,6 @@ type TDashboardState =
       snapshot: IDashboardSnapshot
       apiKey: string
       pending: TPendingAction
-      errorMessage?: string
     }
 
 interface IUseDashboardReturn {
@@ -53,10 +52,10 @@ export const useDashboard = () => {
         snapshot: snapshotResult.value,
         apiKey,
         pending: TPendingAction.None,
-        ...(apiKeyResult.status === "rejected" && {
-          errorMessage: readCommandError(apiKeyResult.reason),
-        }),
       })
+      if (apiKeyResult.status === "rejected") {
+        toast.danger(readCommandError(apiKeyResult.reason))
+      }
     } catch (error) {
       setState({ status: TDashboardStatus.Failed, message: readCommandError(error) })
     }
@@ -66,7 +65,7 @@ export const useDashboard = () => {
     async (pending: TPendingAction, action: () => Promise<IDashboardSnapshot>, notice?: string) => {
       setState((current) => {
         if (current.status !== TDashboardStatus.Ready) return current
-        return { ...current, pending, errorMessage: undefined }
+        return { ...current, pending }
       })
       try {
         const snapshot = await action()
@@ -82,11 +81,12 @@ export const useDashboard = () => {
         return true
       } catch (error) {
         const message = readCommandError(error)
+        toast.danger(message)
         setState((current) => {
           if (current.status !== TDashboardStatus.Ready) {
             return { status: TDashboardStatus.Failed, message }
           }
-          return { ...current, pending: TPendingAction.None, errorMessage: message }
+          return { ...current, pending: TPendingAction.None }
         })
         return false
       }
@@ -141,26 +141,26 @@ export const useDashboard = () => {
     )
   }, [runAction])
 
-  const saveSettings = useCallback(
-    async (values: ILaunchForm) => {
-      return await runAction(
-        TPendingAction.SavingSettings,
-        () => dashboardService.saveSettings(values),
-      )
-    },
-    [runAction],
-  )
+  const saveSettings = useCallback(async (values: ILaunchForm) => {
+    try {
+      await dashboardService.saveSettings(values)
+      return true
+    } catch (error) {
+      const message = readCommandError(error)
+      setState((current) => {
+        if (current.status !== TDashboardStatus.Ready) {
+          return { status: TDashboardStatus.Failed, message }
+        }
+        return current
+      })
+      return false
+    }
+  }, [])
 
   const launch = useCallback(async (settings: ILaunchForm) => {
     if (state.status !== TDashboardStatus.Ready) return
     if (state.snapshot.connection.status !== TConnectionStatus.Connected) {
-      setState({
-        status: TDashboardStatus.Ready,
-        snapshot: state.snapshot,
-        apiKey: state.apiKey,
-        pending: TPendingAction.None,
-        errorMessage: "Save an OpenCode Go API key before launching.",
-      })
+      toast.danger("Save an OpenCode Go API key before launching.")
       return
     }
     setState({
@@ -179,11 +179,12 @@ export const useDashboard = () => {
       }
     } catch (error) {
       const message = readCommandError(error)
+      toast.danger(message)
       setState((current) => {
         if (current.status !== TDashboardStatus.Ready) {
           return { status: TDashboardStatus.Failed, message }
         }
-        return { ...current, pending: TPendingAction.None, errorMessage: message }
+        return { ...current, pending: TPendingAction.None }
       })
       return
     }

@@ -6,7 +6,7 @@ use secrecy::{ExposeSecret, SecretString};
 use tokio::sync::RwLock;
 
 use super::catalog::UpstreamModelList;
-use super::protocol::{endpoint_for_protocol, protocol_candidates, validation_payload};
+use super::protocol::{endpoint_for_protocol, protocol_candidates};
 use crate::constants::{API_KEY_HEADER, AUTHORIZATION_HEADER, MODEL_FIELD};
 use crate::features::providers::{
     ModelCatalogEntry, ProviderError, ProviderHeader, ProviderRequest, ProviderResponse,
@@ -49,41 +49,6 @@ impl OpenCodeGoClient {
             streaming_client,
             protocol_cache: Arc::new(RwLock::new(HashMap::new())),
         })
-    }
-
-    /// Probes a discovered model through each protocol to prove the credential is accepted.
-    pub(super) async fn validate_api_key(
-        &self,
-        api_key: &SecretString,
-    ) -> Result<(), ProviderError> {
-        let catalog = self.fetch_catalog(api_key).await?;
-        let Some(model) = catalog.first() else {
-            return Err(ProviderError::UnexpectedResponse);
-        };
-        for protocol in protocol_candidates() {
-            let payload = validation_payload(&model.id)
-                .map_err(|_source| ProviderError::UnexpectedResponse)?;
-            let body = translate_request(protocol, &payload)
-                .map_err(|_source| ProviderError::UnexpectedResponse)?;
-            let response = self
-                .control_client
-                .post(endpoint_for_protocol(protocol))
-                .header(API_KEY_HEADER, api_key.expose_secret())
-                .header(SESSION_HEADER, uuid::Uuid::new_v4().to_string())
-                .body(body)
-                .send()
-                .await
-                .map_err(ProviderError::Request)?;
-            match response.status() {
-                status if status.is_success() => return Ok(()),
-                StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN => {
-                    return Err(ProviderError::InvalidApiKey);
-                }
-                StatusCode::BAD_REQUEST | StatusCode::NOT_FOUND => {}
-                _status => return Err(ProviderError::UnexpectedResponse),
-            }
-        }
-        Err(ProviderError::UnexpectedResponse)
     }
 
     /// Fetches every model exposed by authenticated upstream discovery.

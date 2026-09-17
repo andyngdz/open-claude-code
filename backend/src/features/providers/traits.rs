@@ -14,11 +14,8 @@ pub trait Provider: Send + Sync {
     /// Returns the provider connection state without exposing credentials.
     async fn connection_state(&self) -> ProviderConnectionState;
 
-    /// Validates and stores an API key, then returns the supported catalog.
-    async fn save_and_test_api_key(
-        &self,
-        api_key: &str,
-    ) -> Result<Vec<ModelCatalogEntry>, ProviderError>;
+    /// Stores an API key locally without contacting the provider.
+    async fn save_api_key(&self, api_key: &str) -> Result<(), ProviderError>;
 
     /// Removes the stored provider credential.
     async fn remove_credential(&self) -> Result<(), ProviderError>;

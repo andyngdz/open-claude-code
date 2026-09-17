@@ -187,8 +187,8 @@ Panels use restrained 8px corners. Inputs, selects, and buttons use 6px corners 
 
 ### Auto-save Model Settings
 
-- **Style:** Compact status next to the Models heading. Hidden until a save starts. Green only after a successful persist. Danger red only after a failed persist.
-- **Behavior:** Changing a terminal or model dropdown persists immediately. Show Saving, then Saved or Save failed. Do not show a Save settings button.
+- **Style:** Toast notification after persist. No inline status next to the Models heading.
+- **Behavior:** Changing a terminal or model picker persists immediately. Toast Settings saved. or Could not save settings. Do not show a Save settings button.
 
 ## Do's and Don'ts
 
@@ -196,7 +196,7 @@ Panels use restrained 8px corners. Inputs, selects, and buttons use 6px corners 
 
 - **Do** keep the workflow ordered from connection to models to launch.
 - **Do** use cobalt blue only for selection and progress.
-- **Do** show immediate, local feedback when model settings auto-save.
+- **Do** toast a confirmation when model settings auto-save.
 - **Do** keep connected state factual, short, and green.
 
 ### Don't:

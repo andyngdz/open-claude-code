@@ -1,4 +1,3 @@
-use crate::constants::MODEL_FIELD;
 use crate::features::translation::UpstreamProtocol;
 
 const MESSAGES_ENDPOINT: &str = "https://opencode.ai/zen/go/v1/messages";
@@ -21,15 +20,6 @@ pub(super) fn protocol_candidates() -> [UpstreamProtocol; 3] {
         UpstreamProtocol::ChatCompletions,
         UpstreamProtocol::Responses,
     ]
-}
-
-/// Creates the smallest Anthropic request that can verify access to a discovered model.
-pub(super) fn validation_payload(model_id: &str) -> Result<Vec<u8>, serde_json::Error> {
-    serde_json::to_vec(&serde_json::json!({
-        MODEL_FIELD: model_id,
-        "max_tokens": 1,
-        "messages": [{ "role": "user", "content": "." }],
-    }))
 }
 
 #[cfg(test)]

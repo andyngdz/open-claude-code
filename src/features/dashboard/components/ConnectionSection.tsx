@@ -51,7 +51,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-2">
                   <Button className="rounded-md" isDisabled={isBusy} isPending={pending === TPendingAction.SavingKey} type="submit">
-                    {pending === TPendingAction.SavingKey ? "Saving" : "Save API key"}
+                    Save API key
                   </Button>
                   <Button
                     className="rounded-md"
@@ -63,7 +63,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
                       void onRefresh()
                     }}
                   >
-                    {pending === TPendingAction.Refreshing ? "Refreshing" : "Refresh models"}
+                    Refresh models
                   </Button>
                 </div>
                 <Button
@@ -76,7 +76,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
                     void onDisconnect()
                   }}
                 >
-                  {pending === TPendingAction.Disconnecting ? "Removing" : "Disconnect"}
+                  Disconnect
                 </Button>
               </div>
             </div>

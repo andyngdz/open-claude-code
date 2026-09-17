@@ -40,9 +40,6 @@ export const Dashboard: FC = () => {
         <h1 className="text-4xl font-bold leading-tight text-foreground">OpenCode Go</h1>
       </header>
       <StatusStrip providerLabel="OpenCode Go" snapshot={state.snapshot} />
-      {state.errorMessage && (
-        <DashboardAlert message={state.errorMessage} status={TDashboardAlertStatus.Danger} />
-      )}
       <ConnectionSection
         apiKey={state.apiKey}
         pending={state.pending}

@@ -64,19 +64,14 @@ impl Provider for OpenCodeGoProvider {
         }
     }
 
-    async fn save_and_test_api_key(
-        &self,
-        raw_api_key: &str,
-    ) -> Result<Vec<ModelCatalogEntry>, ProviderError> {
+    async fn save_api_key(&self, raw_api_key: &str) -> Result<(), ProviderError> {
         let trimmed_api_key = raw_api_key.trim();
         if trimmed_api_key.is_empty() {
             return Err(ProviderError::EmptyApiKey);
         }
-        let api_key = SecretString::from(trimmed_api_key.to_owned());
-        self.client.validate_api_key(&api_key).await?;
-        let catalog = self.client.fetch_catalog(&api_key).await?;
-        self.credentials.save(api_key).await?;
-        Ok(catalog)
+        self.credentials
+            .save(SecretString::from(trimmed_api_key.to_owned()))
+            .await
     }
 
     async fn remove_credential(&self) -> Result<(), ProviderError> {

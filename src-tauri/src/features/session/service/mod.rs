@@ -46,18 +46,11 @@ impl AppSession {
                     | SettingsError::Lock(_) => SessionError::Settings,
                 }
             })?;
-        let mut settings = settings_store
+        let settings = settings_store
             .load()
             .map_err(|_source| SessionError::Settings)?;
         let catalog = runtime::published_catalog(&settings);
         let backend = OpenCodeGoBackend::start(catalog, settings.custom_models.clone()).await?;
-        if let Ok(Some(api_key)) = backend.load_saved_api_key().await {
-            if let Ok(catalog) = backend.save_api_key(api_key.expose_secret()).await {
-                settings.cached_models = runtime::nonempty_catalog(catalog);
-                settings.catalog_refreshed_at_epoch_seconds =
-                    Some(crate::features::settings::current_epoch_seconds());
-            }
-        }
         let state = AppSessionState {
             backend,
             settings,
@@ -91,14 +84,13 @@ impl AppSession {
             .unwrap_or_default())
     }
 
-    /// Validates, stores, and publishes a new API key.
+    /// Stores an API key locally without refreshing the model catalog.
     pub(crate) async fn save_api_key(
         &self,
         api_key: &str,
     ) -> Result<DashboardSnapshot, SessionError> {
-        let mut inner = self.inner.lock().await;
-        let catalog = runtime::nonempty_catalog(inner.backend.save_api_key(api_key).await?);
-        runtime::persist_catalog(&mut inner, catalog).await?;
+        let inner = self.inner.lock().await;
+        inner.backend.save_api_key(api_key).await?;
         Ok(runtime::snapshot_from_state(&inner).await)
     }
 

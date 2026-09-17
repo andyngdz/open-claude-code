@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 
 import { act, renderHook } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { toast } from "@heroui/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import {
+  SETTINGS_SAVE_FAILED_NOTICE,
+  SETTINGS_SAVED_NOTICE,
+} from "@/features/dashboard/constants/dashboardLabels"
 import { useLaunchSection } from "@/features/dashboard/hooks/useLaunchSection"
-import { TAutosaveStatus } from "@/features/dashboard/constants/dashboardLabels"
 import {
   TConnectionStatus,
   TPendingAction,
@@ -25,8 +29,14 @@ const snapshot = {
 } satisfies IDashboardSnapshot
 
 describe("useLaunchSection", () => {
+  beforeEach(() => {
+    vi.spyOn(toast, "success").mockReturnValue({} as never)
+    vi.spyOn(toast, "danger").mockReturnValue({} as never)
+  })
+
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it("saves changed settings without requiring a manual submit", async () => {
@@ -60,9 +70,11 @@ describe("useLaunchSection", () => {
     })
 
     expect(saveSettings).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(toast.danger).not.toHaveBeenCalled()
   })
 
-  it("reports saved only after a persist succeeds", async () => {
+  it("toasts Settings saved only after a persist succeeds", async () => {
     vi.useFakeTimers()
     let finishSave: (saved: boolean) => void = () => {}
     const saveSettings = vi.fn(
@@ -75,25 +87,24 @@ describe("useLaunchSection", () => {
       return useLaunchSection(snapshot, TPendingAction.None, saveSettings)
     })
 
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Idle)
-
     act(() => {
       result.current.setValue("modelId", "model-b")
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Idle)
+    expect(toast.success).not.toHaveBeenCalled()
 
     act(() => {
       vi.advanceTimersByTime(350)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Saving)
+    expect(toast.success).not.toHaveBeenCalled()
 
     await act(async () => {
       finishSave(true)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Saved)
+    expect(toast.success).toHaveBeenCalledWith(SETTINGS_SAVED_NOTICE)
+    expect(toast.danger).not.toHaveBeenCalled()
   })
 
-  it("reports save failed when persist returns false", async () => {
+  it("toasts Could not save settings when persist returns false", async () => {
     vi.useFakeTimers()
     let finishSave: (saved: boolean) => void = () => {}
     const saveSettings = vi.fn(
@@ -116,7 +127,42 @@ describe("useLaunchSection", () => {
     await act(async () => {
       finishSave(false)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Failed)
+    expect(toast.danger).toHaveBeenCalledWith(SETTINGS_SAVE_FAILED_NOTICE)
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("keeps local model edits when a later snapshot repeats persistable settings", async () => {
+    vi.useFakeTimers()
+    const saveSettings = vi.fn().mockResolvedValue(true)
+    const { result, rerender } = renderHook(
+      ({ currentSnapshot, pending }) => {
+        return useLaunchSection(currentSnapshot, pending, saveSettings)
+      },
+      { initialProps: { currentSnapshot: snapshot, pending: TPendingAction.None } },
+    )
+
+    act(() => {
+      result.current.setValue("modelId", "model-b")
+      result.current.setValue("customModels", [{ modelId: "" }])
+    })
+    act(() => {
+      vi.advanceTimersByTime(350)
+    })
+    await vi.waitFor(() => {
+      expect(saveSettings).toHaveBeenCalled()
+    })
+
+    rerender({
+      currentSnapshot: {
+        ...snapshot,
+        launchModelId: "model-b",
+        models: [...snapshot.models, { id: "model-c", displayName: "Model C", isCustom: false }],
+      },
+      pending: TPendingAction.SavingSettings,
+    })
+
+    expect(result.current.getValues("modelId")).toBe("model-b")
+    expect(result.current.getValues("customModels")).toEqual([{ modelId: "" }])
   })
 
   it("keeps an empty custom model row instead of autosaving it away", async () => {

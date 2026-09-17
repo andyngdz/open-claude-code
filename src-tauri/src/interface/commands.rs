@@ -23,7 +23,7 @@ pub(crate) async fn saved_api_key(session: State<'_, AppSession>) -> Result<Stri
         .map_err(|error| error.to_string())
 }
 
-/// Validates and stores an OpenCode Go API key.
+/// Stores an OpenCode Go API key in the local keyring.
 #[tauri::command]
 pub(crate) async fn save_api_key(
     session: State<'_, AppSession>,
