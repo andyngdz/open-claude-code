@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-17T09:34:17+07:00",
+  "title": "Design System: Open Claude Code",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Night Canvas",
+        "canonical": "#07101d",
+        "tonalRamp": ["#07101d", "#101d2d", "#1c2c40", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Sidebar Slate",
+        "canonical": "#0b1727",
+        "tonalRamp": ["#07101d", "#0b1727", "#15243a", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Slate",
+        "canonical": "#101d2d",
+        "tonalRamp": ["#07101d", "#101d2d", "#1c2c40", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field Inset",
+        "canonical": "#0c1827",
+        "tonalRamp": ["#07101d", "#0c1827", "#1a2a3d", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Structure Line",
+        "canonical": "#29415d",
+        "tonalRamp": ["#07101d", "#101d2d", "#1c2c40", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#f3f7ff",
+        "tonalRamp": ["#07101d", "#101d2d", "#1c2c40", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Steel",
+        "canonical": "#a9bdd8",
+        "tonalRamp": ["#07101d", "#101d2d", "#1c2c40", "#29415d", "#49627f", "#7790ad", "#a9bdd8", "#f3f7ff"]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Launch Blue",
+        "canonical": "#1478ff",
+        "tonalRamp": ["#061b43", "#092c68", "#0d469d", "#1161d4", "#1478ff", "#5d9dff", "#a8caff", "#e7f0ff"]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Lifted Blue",
+        "canonical": "#2a88ff",
+        "tonalRamp": ["#092050", "#0d3477", "#154eae", "#1d6ddc", "#2a88ff", "#69a9ff", "#add0ff", "#eaf3ff"]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Ready Green",
+        "canonical": "#48e6a4",
+        "tonalRamp": ["#082f24", "#0b513c", "#11765a", "#1da879", "#48e6a4", "#85edc2", "#b9f6dc", "#e9fff5"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Disconnect Red",
+        "canonical": "#ff5f75",
+        "tonalRamp": ["#410b19", "#681121", "#982033", "#cc3850", "#ff5f75", "#ff97a6", "#ffc4cd", "#fff0f2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Workspace Display", "purpose": "Provider and workflow title at the top of the main workspace." },
+      "title": { "displayName": "Panel Title", "purpose": "Section headings such as Connection and Models." },
+      "body": { "displayName": "Operational Body", "purpose": "Descriptions and selected control values." },
+      "label": { "displayName": "Control Label", "purpose": "Field labels, status text, and navigation labels." }
+    },
+    "shadows": [
+      { "name": "overlay-separation", "value": "0 8px 24px rgba(0, 0, 0, 0.2)", "purpose": "Use only when an overlay needs separation from the workspace." }
+    ],
+    "motion": [
+      { "name": "state-transition", "value": "160ms ease-out", "purpose": "Selected, hover, focus, and auto-save status changes." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "768px" },
+      { "name": "desktop", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Commits the current workflow action, including launch.",
+      "html": "<button class=\"ds-button-primary\">Launch Claude Code</button>",
+      "css": ".ds-button-primary { background: #1478ff; color: #f3f7ff; border: 1px solid #1478ff; border-radius: 6px; padding: 12px 28px; font: 600 14px/1.25 system-ui, sans-serif; cursor: pointer; transition: background 160ms ease-out, border-color 160ms ease-out; } .ds-button-primary:hover { background: #2a88ff; border-color: #2a88ff; } .ds-button-primary:focus-visible { outline: 2px solid #a8caff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Handles supporting actions without competing with launch.",
+      "html": "<button class=\"ds-button-secondary\">Refresh models</button>",
+      "css": ".ds-button-secondary { background: #101d2d; color: #f3f7ff; border: 1px solid #29415d; border-radius: 6px; padding: 12px 28px; font: 600 14px/1.25 system-ui, sans-serif; cursor: pointer; transition: border-color 160ms ease-out, background 160ms ease-out; } .ds-button-secondary:hover { background: #1c2c40; border-color: #7790ad; } .ds-button-secondary:focus-visible { outline: 2px solid #a8caff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Marks destructive actions such as disconnecting a provider.",
+      "html": "<button class=\"ds-button-danger\">Disconnect</button>",
+      "css": ".ds-button-danger { background: transparent; color: #ff5f75; border: 1px solid #ff5f75; border-radius: 6px; padding: 12px 28px; font: 600 14px/1.25 system-ui, sans-serif; cursor: pointer; transition: background 160ms ease-out; } .ds-button-danger:hover { background: rgba(255, 95, 117, 0.12); } .ds-button-danger:focus-visible { outline: 2px solid #ffc4cd; outline-offset: 2px; }"
+    },
+    {
+      "name": "Provider Navigation Item",
+      "kind": "nav",
+      "refersTo": "provider-navigation",
+      "description": "Selects which provider configuration occupies the workspace.",
+      "html": "<nav class=\"ds-provider-nav\"><a class=\"ds-provider-item ds-provider-item-selected\" href=\"#opencode\">OpenCode Go</a><a class=\"ds-provider-item\" href=\"#codex\">Codex</a></nav>",
+      "css": ".ds-provider-nav { background: #0b1727; padding: 12px; font-family: system-ui, sans-serif; } .ds-provider-item { display: block; color: #a9bdd8; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-weight: 600; text-decoration: none; } .ds-provider-item:hover { background: #1c2c40; color: #f3f7ff; } .ds-provider-item:focus-visible { outline: 2px solid #a8caff; outline-offset: 2px; } .ds-provider-item-selected { background: #1478ff; color: #f3f7ff; }"
+    },
+    {
+      "name": "Model Select",
+      "kind": "input",
+      "refersTo": "form-field",
+      "description": "Shows a selected runtime or model value in a compact field.",
+      "html": "<label class=\"ds-field-label\">Model<select class=\"ds-model-select\"><option>DeepSeek V4.1 Flash</option></select></label>",
+      "css": ".ds-field-label { color: #f3f7ff; display: grid; gap: 8px; font: 600 14px/1.25 system-ui, sans-serif; } .ds-model-select { appearance: none; background: #0c1827; color: #f3f7ff; border: 1px solid #29415d; border-radius: 6px; padding: 12px 16px; font: 400 16px/1.5 system-ui, sans-serif; } .ds-model-select:hover { border-color: #7790ad; } .ds-model-select:focus-visible { border-color: #1478ff; outline: 2px solid #1478ff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Configuration Card",
+      "kind": "card",
+      "refersTo": "panel-card",
+      "description": "Groups one connected unit of setup work.",
+      "html": "<section class=\"ds-card\"><h2>Models</h2><p>Changes save automatically</p></section>",
+      "css": ".ds-card { background: #101d2d; border: 1px solid #29415d; border-radius: 8px; color: #f3f7ff; padding: 20px; font-family: system-ui, sans-serif; } .ds-card h2 { font-size: 26px; line-height: 1.2; margin: 0 0 8px; } .ds-card p { color: #48e6a4; font-size: 14px; margin: 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Open Claude Code",
+    "overview": "Open Claude Code is a dark developer workbench for configuring a local gateway, not a dashboard that competes for attention. The interface gives structure to a short operational flow: connect a provider, choose runtime settings, then launch Claude Code. The visual language is calm, direct, and technical. It rejects gradients, ornamental illustration, visual noise, and decorative effects that dilute a tool's purpose.",
+    "keyCharacteristics": ["dark navy workspace with slate panel layers", "cobalt blue for selected navigation and primary actions", "readable forms with quiet borders and high-contrast text", "green for ready and connected states, red only for destructive actions"],
+    "rules": [
+      { "name": "The One Blue Rule", "body": "Blue marks selection and progress, not decoration. A screen should retain quiet dark surfaces around every primary action.", "section": "colors" },
+      { "name": "The Semantic State Rule", "body": "Green communicates connected or ready state. Red is reserved for removal and other destructive actions.", "section": "colors" },
+      { "name": "The Plainspoken Hierarchy Rule", "body": "Use type scale to explain the workflow. Avoid display styling, all-caps labels, and decorative font treatment.", "section": "typography" },
+      { "name": "The Border Before Shadow Rule", "body": "Use a 1px structure line first. Add a soft shadow only when an overlay or focus state needs separation.", "section": "elevation" }
+    ],
+    "dos": ["Do keep the workflow ordered from connection to models to launch.", "Do use cobalt blue only for selection and progress.", "Do show immediate, local feedback when model settings auto-save.", "Do keep connected state factual, short, and green."],
+    "donts": ["Don't use gradients, illustrations, decorative motifs, or glass effects.", "Don't turn every container into a bright card or raised surface.", "Don't use green or red as general-purpose accent colors.", "Don't require a manual save action for dropdown model settings."]
+  }
+}
