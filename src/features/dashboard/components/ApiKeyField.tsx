@@ -43,6 +43,7 @@ export const ApiKeyField: FC = () => {
         </InputGroup.Suffix>
       </InputGroup>
       <FieldError>{message}</FieldError>
+      <p className="form-section-copy">Stored in the system keyring on this machine.</p>
     </TextField>
   )
 }

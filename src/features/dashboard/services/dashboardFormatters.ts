@@ -1,4 +1,4 @@
-import { compact, filter, isError, isString, map, trim } from "es-toolkit/compat"
+import { compact, filter, isEmpty, isError, isString, map, trim } from "es-toolkit/compat"
 import { TProviderId } from "@/features/dashboard/constants/dashboardProviders"
 import type {
   ICustomModelField,
@@ -29,11 +29,19 @@ export const customModelIds = (entries: readonly ICustomModelField[]) => {
   return compact(map(entries, (entry) => trim(entry.modelId)))
 }
 
-export const connectionLabel = (snapshot: IDashboardSnapshot) => {
+/// Short connection fact for the status strip. Failures stay in the alert, not this label.
+export const connectionStatusLabel = (snapshot: IDashboardSnapshot) => {
   if (snapshot.connection.status === TConnectionStatus.Connected) return "Connected"
-  if (snapshot.connection.status === TConnectionStatus.Failed) return snapshot.connection.message
+  if (snapshot.connection.status === TConnectionStatus.Failed) return "Connection failed"
   return "Not connected"
 }
+
+/// Launch is ready only when a credential and a launch model are both present.
+export const isLaunchReady = (snapshot: IDashboardSnapshot) => {
+  return snapshot.connection.status === TConnectionStatus.Connected && !isEmpty(snapshot.launchModelId)
+}
+
+export const launchSettingsFingerprint = (values: ILaunchForm) => JSON.stringify(values)
 
 export const launchFormDefaults = (snapshot: IDashboardSnapshot) => {
   return {
@@ -59,6 +67,12 @@ export const modelOptions = (snapshot: IDashboardSnapshot) => {
   )
 
   return [...snapshot.models, ...customOptions]
+}
+
+export const modelAvailabilityLabel = (snapshot: IDashboardSnapshot) => {
+  const availableCount = modelOptions(snapshot).length
+  if (availableCount === 1) return "1 available"
+  return `${availableCount} available`
 }
 
 export const readCommandError = (error: unknown) => {

@@ -76,6 +76,7 @@ pub(super) async fn snapshot_from_state(inner: &AppSessionState) -> DashboardSna
         terminals: list_available_terminals(),
         last_workspace: inner.settings.last_workspace.clone(),
         catalog_refreshed_at_epoch_seconds: inner.settings.catalog_refreshed_at_epoch_seconds,
+        gateway_base_url: inner.backend.gateway_base_url().to_owned(),
     }
 }
 

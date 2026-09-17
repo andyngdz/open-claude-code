@@ -21,6 +21,7 @@ const connectedSnapshot = {
   terminals: [],
   lastWorkspace: null,
   catalogRefreshedAtEpochSeconds: null,
+  gatewayBaseUrl: "http://127.0.0.1:9",
 } satisfies IDashboardSnapshot
 
 describe("useConnectionSection", () => {

@@ -7,6 +7,7 @@ import { LaunchSection } from "@/features/dashboard/components/LaunchSection"
 import { TDashboardAlertStatus } from "@/features/dashboard/constants/dashboardLabels"
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
 import { DashboardAlert } from "@/features/dashboard/presentations/DashboardAlert"
+import { StatusStrip } from "@/features/dashboard/presentations/StatusStrip"
 import { TDashboardStatus, TPendingAction } from "@/features/dashboard/schemas/dashboard.schema"
 
 export const Dashboard: FC = () => {
@@ -33,12 +34,21 @@ export const Dashboard: FC = () => {
     )
   }
 
+  const showsWorkingAlert =
+    state.pending !== TPendingAction.None && state.pending !== TPendingAction.SavingSettings
+
   return (
     <DashboardShell>
-      <header className="flex flex-col gap-2">
-        <p className="text-sm text-muted">OpenCode Go</p>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+      <header className="workspace-header">
+        <div>
+          <h1 className="workspace-title">OpenCode Go</h1>
+          <p className="workspace-subtitle">Launch Claude Code</p>
+          <p className="workspace-copy">
+            Configure the connection, choose models, and launch Claude Code through the local gateway.
+          </p>
+        </div>
       </header>
+      <StatusStrip providerLabel="OpenCode Go" snapshot={state.snapshot} />
       {state.errorMessage && (
         <DashboardAlert message={state.errorMessage} status={TDashboardAlertStatus.Danger} />
       )}
@@ -57,7 +67,7 @@ export const Dashboard: FC = () => {
         onSaveSettings={dashboard.saveSettings}
         onLaunch={dashboard.launch}
       />
-      {state.pending !== TPendingAction.None && (
+      {showsWorkingAlert && (
         <DashboardAlert message="Working" status={TDashboardAlertStatus.Accent} />
       )}
     </DashboardShell>

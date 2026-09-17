@@ -33,11 +33,12 @@ const previewSnapshot = {
   ],
   lastWorkspace: "/workspace/example-project",
   catalogRefreshedAtEpochSeconds: null,
+  gatewayBaseUrl: "http://127.0.0.1:9",
 } satisfies IDashboardSnapshot
 
 export const DashboardPreview: FC = () => {
   const saveApiKey = async () => true
-  const saveSettings = async (_values: ILaunchForm) => {}
+  const saveSettings = async (_values: ILaunchForm) => true
   const launch = async () => {}
 
   return (

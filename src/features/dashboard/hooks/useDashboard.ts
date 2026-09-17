@@ -31,7 +31,7 @@ interface IUseDashboardReturn {
   saveApiKey: ValueChanged<string, Promise<boolean>>
   disconnect: () => Promise<void>
   refreshCatalog: () => Promise<void>
-  saveSettings: ValueChanged<ILaunchForm, Promise<void>>
+  saveSettings: ValueChanged<ILaunchForm, Promise<boolean>>
   launch: ValueChanged<ILaunchForm, Promise<void>>
 }
 
@@ -144,10 +144,9 @@ export const useDashboard = () => {
 
   const saveSettings = useCallback(
     async (values: ILaunchForm) => {
-      await runAction(
+      return await runAction(
         TPendingAction.SavingSettings,
         () => dashboardService.saveSettings(values),
-        "Settings saved.",
       )
     },
     [runAction],

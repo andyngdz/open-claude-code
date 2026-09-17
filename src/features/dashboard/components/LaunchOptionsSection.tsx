@@ -26,25 +26,21 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
   )
 
   return (
-    <Card className="w-full">
-      <Card.Header>
-        <Card.Title>Launch options</Card.Title>
-      </Card.Header>
-      <Card.Content>
+    <Card className="launch-card workbench-card w-full">
+      <Card.Content className="workbench-card-content">
         <div className="flex flex-col gap-4">
-          <div>
-            <Button
-              isDisabled={!canPressLaunch}
-              isPending={isLaunching}
-              type="button"
-              onPress={() => {
-                void onPressLaunch()
-              }}
-            >
-              {isLaunching ? "Opening" : "Launch Claude Code"}
-            </Button>
-          </div>
           <LaunchCommandField copied={copied} onCopy={onCopy} />
+          <Button
+            className="launch-card-action"
+            isDisabled={!canPressLaunch}
+            isPending={isLaunching}
+            type="button"
+            onPress={() => {
+              void onPressLaunch()
+            }}
+          >
+            {isLaunching ? "Opening" : "Launch Claude Code"}
+          </Button>
         </div>
       </Card.Content>
     </Card>
