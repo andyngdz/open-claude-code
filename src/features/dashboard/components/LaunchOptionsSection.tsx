@@ -1,6 +1,7 @@
 import { Button, Card } from "@heroui/react"
 import type { FC } from "react"
 
+import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { useLaunchOptionsSection } from "@/features/dashboard/hooks/useLaunchOptionsSection"
 import { LaunchCommandField } from "@/features/dashboard/presentations/LaunchCommandField"
 import { TPendingAction, type IDashboardSnapshot } from "@/features/dashboard/schemas/dashboard.schema"
@@ -26,14 +27,20 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
   )
 
   return (
-    <Card className="launch-card workbench-card w-full">
-      <Card.Content className="workbench-card-content">
-        <div className="flex flex-col gap-4">
+    <>
+      <Card className={WORKBENCH_CARD_CLASS}>
+        <Card.Content>
           <LaunchCommandField copied={copied} onCopy={onCopy} />
+        </Card.Content>
+      </Card>
+      <Card className={WORKBENCH_CARD_CLASS}>
+        <Card.Content>
           <Button
-            className="launch-card-action"
+            className="rounded-md"
+            fullWidth
             isDisabled={!canPressLaunch}
             isPending={isLaunching}
+            size="lg"
             type="button"
             onPress={() => {
               void onPressLaunch()
@@ -41,8 +48,8 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
           >
             {isLaunching ? "Opening" : "Launch Claude Code"}
           </Button>
-        </div>
-      </Card.Content>
-    </Card>
+        </Card.Content>
+      </Card>
+    </>
   )
 }

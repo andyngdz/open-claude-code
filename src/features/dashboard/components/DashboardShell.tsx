@@ -15,7 +15,7 @@ export const DashboardShell: FC<IDashboardShellProps> = ({
   const [provider, setProvider] = useState(TProviderId.OpenCode)
 
   return (
-    <div className="app-frame">
+    <div className="min-h-dvh bg-background text-foreground md:flex">
       <ProviderSidebar selected={provider} onSelect={setProvider} />
       <div className="min-w-0 flex-1">
         <ProviderPanel provider={provider}>

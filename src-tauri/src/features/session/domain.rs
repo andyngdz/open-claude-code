@@ -30,6 +30,4 @@ pub(crate) struct DashboardSnapshot {
     pub(crate) last_workspace: Option<PathBuf>,
     /// Unix time of the last successful catalog refresh.
     pub(crate) catalog_refreshed_at_epoch_seconds: Option<u64>,
-    /// Loopback address of the running local gateway.
-    pub(crate) gateway_base_url: String,
 }

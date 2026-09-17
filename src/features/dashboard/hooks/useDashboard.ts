@@ -21,7 +21,6 @@ type TDashboardState =
       snapshot: IDashboardSnapshot
       apiKey: string
       pending: TPendingAction
-      notice?: string
       errorMessage?: string
     }
 
@@ -67,7 +66,7 @@ export const useDashboard = () => {
     async (pending: TPendingAction, action: () => Promise<IDashboardSnapshot>, notice?: string) => {
       setState((current) => {
         if (current.status !== TDashboardStatus.Ready) return current
-        return { ...current, pending, errorMessage: undefined, notice: undefined }
+        return { ...current, pending, errorMessage: undefined }
       })
       try {
         const snapshot = await action()
@@ -77,9 +76,9 @@ export const useDashboard = () => {
             ...current,
             snapshot,
             pending: TPendingAction.None,
-            notice,
           }
         })
+        if (isString(notice)) toast.success(notice)
         return true
       } catch (error) {
         const message = readCommandError(error)

@@ -10,7 +10,7 @@ interface IDashboardAlertProps {
 
 export const DashboardAlert: FC<IDashboardAlertProps> = ({ message, status }) => {
   return (
-    <Alert role={status === TDashboardAlertStatus.Danger ? "alert" : "status"} status={status}>
+    <Alert role="alert" status={status}>
       <Alert.Indicator />
       <Alert.Content>
         <Alert.Description>{message}</Alert.Description>

@@ -15,7 +15,6 @@ describe("dashboard snapshot", () => {
       terminals: [{ kind: "system_default", label: "System default", isAvailable: true }],
       lastWorkspace: null,
       catalogRefreshedAtEpochSeconds: null,
-      gatewayBaseUrl: "http://127.0.0.1:9",
     })
     expect(snapshot.connection.status).toBe(TConnectionStatus.Disconnected)
   })

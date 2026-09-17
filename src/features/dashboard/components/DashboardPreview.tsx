@@ -33,7 +33,6 @@ const previewSnapshot = {
   ],
   lastWorkspace: "/workspace/example-project",
   catalogRefreshedAtEpochSeconds: null,
-  gatewayBaseUrl: "http://127.0.0.1:9",
 } satisfies IDashboardSnapshot
 
 export const DashboardPreview: FC = () => {
@@ -43,9 +42,8 @@ export const DashboardPreview: FC = () => {
 
   return (
     <DashboardShell>
-      <header className="flex flex-col gap-2">
-        <p className="text-sm text-muted">OpenCode Go</p>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+      <header className="py-2">
+        <h1 className="text-4xl font-bold leading-tight text-foreground">OpenCode Go</h1>
       </header>
       <ConnectionSection
         apiKey=""

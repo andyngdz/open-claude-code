@@ -72,7 +72,6 @@ export const dashboardSnapshotSchema = z.object({
   terminals: z.array(terminalOptionSchema),
   lastWorkspace: z.string().nullable(),
   catalogRefreshedAtEpochSeconds: z.number().nullable(),
-  gatewayBaseUrl: z.string().min(1),
 })
 
 export const apiKeySchema = z.object({

@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import type { UseFormReturn } from "react-hook-form"
 
+import { TAutosaveStatus } from "@/features/dashboard/constants/dashboardLabels"
 import {
   launchFormSchema,
   TPendingAction,
@@ -14,10 +15,12 @@ import {
   launchFormDefaults,
   launchSettingsFingerprint,
   modelOptions,
+  persistableLaunchForm,
 } from "@/features/dashboard/services/dashboardFormatters"
 import type { ValueChanged } from "@/types"
 
 interface IUseLaunchSectionReturn extends UseFormReturn<ILaunchForm> {
+  autosaveStatus: TAutosaveStatus
   isBusy: boolean
   options: IModelOption[]
 }
@@ -36,31 +39,48 @@ export const useLaunchSection = (
   const isBusy = pending !== TPendingAction.None
   const savedSettings = useRef(launchSettingsFingerprint(launchFormDefaults(snapshot)))
   const watchedValues = useWatch({ control: methods.control })
+  const [autosaveStatus, setAutosaveStatus] = useState(TAutosaveStatus.Idle)
 
   useEffect(() => {
     const defaults = launchFormDefaults(snapshot)
-    savedSettings.current = launchSettingsFingerprint(defaults)
+    const snapshotFingerprint = launchSettingsFingerprint(defaults)
+    savedSettings.current = snapshotFingerprint
+    const parsed = launchFormSchema.safeParse(methods.getValues())
+    if (parsed.success && launchSettingsFingerprint(parsed.data) === snapshotFingerprint) return
     methods.reset(defaults)
   }, [methods, snapshot])
 
   useEffect(() => {
+    if (import.meta.env.SSR) return
     const parsed = launchFormSchema.safeParse(watchedValues)
     if (!parsed.success) return
-    const fingerprint = launchSettingsFingerprint(parsed.data)
+    const persistable = persistableLaunchForm(parsed.data)
+    const fingerprint = launchSettingsFingerprint(persistable)
     if (fingerprint === savedSettings.current) return
 
+    setAutosaveStatus(TAutosaveStatus.Idle)
+    let cancelled = false
     const timer = window.setTimeout(() => {
-      void onSaveSettings(parsed.data).then((saved) => {
-        if (saved) savedSettings.current = fingerprint
+      setAutosaveStatus(TAutosaveStatus.Saving)
+      void onSaveSettings(persistable).then((saved) => {
+        if (cancelled) return
+        if (saved) {
+          savedSettings.current = fingerprint
+          setAutosaveStatus(TAutosaveStatus.Saved)
+          return
+        }
+        setAutosaveStatus(TAutosaveStatus.Failed)
       })
     }, AUTO_SAVE_DELAY_MS)
     return () => {
+      cancelled = true
       window.clearTimeout(timer)
     }
   }, [onSaveSettings, watchedValues])
 
   return {
     ...methods,
+    autosaveStatus,
     isBusy,
     options: modelOptions(snapshot),
   } satisfies IUseLaunchSectionReturn

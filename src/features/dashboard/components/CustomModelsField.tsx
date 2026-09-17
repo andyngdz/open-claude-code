@@ -15,26 +15,24 @@ export const CustomModelsField: FC<ICustomModelsFieldProps> = ({ isDisabled }) =
   return (
     <div className="flex flex-col gap-2">
       <div>
-        <p className="form-section-label">Custom models</p>
-        <p className="form-section-copy">Add provider model IDs not returned by the catalog.</p>
+        <p className="text-sm font-semibold text-foreground">Custom models</p>
+        <p className="text-sm text-muted">Add provider model IDs not returned by the catalog.</p>
       </div>
       {map(fields, (field, index) => (
         <CustomModelRow index={index} isDisabled={isDisabled} key={field.id} onRemove={remove} />
       ))}
-      <div className="custom-model-actions">
-        <Button
-          className="connection-button"
-          aria-label="Add custom model"
-          isDisabled={isDisabled}
-          isIconOnly
-          type="button"
-          onPress={() => {
-            append({ modelId: "" })
-          }}
-        >
-          +
-        </Button>
-      </div>
+      <Button
+        aria-label="Add custom model"
+        className="rounded-md"
+        isDisabled={isDisabled}
+        isIconOnly
+        type="button"
+        onPress={() => {
+          append({ modelId: "" })
+        }}
+      >
+        +
+      </Button>
     </div>
   )
 }

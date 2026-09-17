@@ -3,6 +3,7 @@ import { FormProvider } from "react-hook-form"
 import type { FC } from "react"
 
 import { ApiKeyField } from "@/features/dashboard/components/ApiKeyField"
+import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { useConnectionSection } from "@/features/dashboard/hooks/useConnectionSection"
 import {
   TPendingAction,
@@ -35,25 +36,25 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
   )
 
   return (
-    <Card className="workbench-card w-full">
-      <Card.Header className="workbench-card-header">
-        <Card.Title>Connection</Card.Title>
+    <Card className={WORKBENCH_CARD_CLASS}>
+      <Card.Header className="flex flex-col gap-2">
+        <Card.Title className="text-2xl font-bold">Connection</Card.Title>
         <Card.Description>
           Save an OpenCode Go API key so Claude Code can use this provider through the local gateway.
         </Card.Description>
       </Card.Header>
-      <Card.Content className="workbench-card-content">
+      <Card.Content>
         <FormProvider {...methods}>
           <Form onSubmit={methods.handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-4">
               <ApiKeyField />
-              <div className="connection-actions">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-2">
-                  <Button className="connection-button" isDisabled={isBusy} isPending={pending === TPendingAction.SavingKey} type="submit">
+                  <Button className="rounded-md" isDisabled={isBusy} isPending={pending === TPendingAction.SavingKey} type="submit">
                     {pending === TPendingAction.SavingKey ? "Saving" : "Save API key"}
                   </Button>
                   <Button
-                    className="connection-button connection-button-secondary"
+                    className="rounded-md"
                     isDisabled={!isConnected || isBusy}
                     isPending={pending === TPendingAction.Refreshing}
                     type="button"
@@ -66,7 +67,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
                   </Button>
                 </div>
                 <Button
-                  className="connection-button connection-button-danger"
+                  className="rounded-md"
                   isDisabled={!isConnected || isBusy}
                   isPending={pending === TPendingAction.Disconnecting}
                   type="button"

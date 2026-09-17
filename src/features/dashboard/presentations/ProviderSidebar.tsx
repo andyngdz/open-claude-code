@@ -1,4 +1,5 @@
 import { Label, ListBox } from "@heroui/react"
+import { clsx } from "clsx"
 import { isString, map } from "es-toolkit/compat"
 import { Box, CodeXml, Hexagon, Server, Sparkles } from "lucide-react"
 import type { FC } from "react"
@@ -14,12 +15,19 @@ interface IProviderSidebarProps {
 
 export const ProviderSidebar: FC<IProviderSidebarProps> = ({ selected, onSelect }) => {
   return (
-    <aside className="app-sidebar">
-      <div className="brand-lockup">
-        <p className="brand-title">Open Claude Code</p>
-        <p className="brand-copy">Your local gateway for Claude Code.</p>
+    <aside
+      className={clsx(
+        "flex w-full shrink-0 flex-col gap-4",
+        "border-b border-border bg-background-secondary",
+        "px-4 py-6 md:w-80",
+        "md:border-r md:border-b-0",
+      )}
+    >
+      <div className="flex flex-col gap-2 px-4">
+        <p className="whitespace-nowrap text-2xl font-bold text-foreground">Open Claude Code</p>
+        <p className="text-sm text-muted">Your local gateway for Claude Code.</p>
       </div>
-      <p className="provider-nav-label">Providers</p>
+      <p className="px-4 text-sm font-semibold text-muted">Providers</p>
       <ListBox
         aria-label="Providers"
         className="w-full"
@@ -36,12 +44,16 @@ export const ProviderSidebar: FC<IProviderSidebarProps> = ({ selected, onSelect 
       >
         {map(PROVIDERS, (provider) => (
           <ListBox.Item
-            className="provider-nav-item"
+            className={clsx(
+              "rounded-lg py-2 text-muted",
+              "aria-selected:bg-accent aria-selected:text-accent-foreground",
+              "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground",
+            )}
             id={provider}
             key={provider}
             textValue={PROVIDER_LABELS[provider]}
           >
-            <span className="provider-nav-row">
+            <span className="flex items-center gap-2">
               {provider === TProviderId.OpenCode && <Server size={16} />}
               {provider === TProviderId.Codex && <CodeXml size={16} />}
               {provider === TProviderId.Grok && <Hexagon size={16} />}

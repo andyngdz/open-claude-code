@@ -7,8 +7,10 @@ import { CustomModelsField } from "@/features/dashboard/components/CustomModelsF
 import { LaunchOptionsSection } from "@/features/dashboard/components/LaunchOptionsSection"
 import { ModelSelect } from "@/features/dashboard/components/ModelSelect"
 import { TerminalSelect } from "@/features/dashboard/components/TerminalSelect"
+import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { ALIAS_LABELS, MODEL_FAMILIES, TModelField } from "@/features/dashboard/constants/dashboardLabels"
 import { useLaunchSection } from "@/features/dashboard/hooks/useLaunchSection"
+import { AutosaveStatus } from "@/features/dashboard/presentations/AutosaveStatus"
 import {
   TPendingAction,
   type IDashboardSnapshot,
@@ -29,21 +31,25 @@ export const LaunchSection: FC<ILaunchSectionProps> = ({
   onSaveSettings,
   onLaunch,
 }) => {
-  const { isBusy, options, ...methods } = useLaunchSection(snapshot, pending, onSaveSettings)
+  const { autosaveStatus, isBusy, options, ...methods } = useLaunchSection(
+    snapshot,
+    pending,
+    onSaveSettings,
+  )
 
   return (
     <>
-      <Card className="workbench-card w-full">
-        <Card.Header className="workbench-card-header">
-          <div className="flex flex-wrap items-center gap-3">
-            <Card.Title>Models</Card.Title>
-            <p className="autosave-status">Changes save automatically</p>
+      <Card className={WORKBENCH_CARD_CLASS}>
+        <Card.Header className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Card.Title className="text-2xl font-bold">Models</Card.Title>
+            <AutosaveStatus status={autosaveStatus} />
           </div>
           <Card.Description>
             Choose the terminal, default model, and family aliases Claude Code will use.
           </Card.Description>
         </Card.Header>
-        <Card.Content className="workbench-card-content">
+        <Card.Content>
           <FormProvider {...methods}>
             <Form>
               <div className="flex flex-col gap-4">

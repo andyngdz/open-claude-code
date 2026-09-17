@@ -8,7 +8,7 @@ import { TDashboardAlertStatus } from "@/features/dashboard/constants/dashboardL
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
 import { DashboardAlert } from "@/features/dashboard/presentations/DashboardAlert"
 import { StatusStrip } from "@/features/dashboard/presentations/StatusStrip"
-import { TDashboardStatus, TPendingAction } from "@/features/dashboard/schemas/dashboard.schema"
+import { TDashboardStatus } from "@/features/dashboard/schemas/dashboard.schema"
 
 export const Dashboard: FC = () => {
   const dashboard = useDashboard()
@@ -25,34 +25,24 @@ export const Dashboard: FC = () => {
   if (state.status === TDashboardStatus.Failed) {
     return (
       <DashboardShell>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+        <h1 className="text-lg font-semibold">OpenCode Go</h1>
         <DashboardAlert message={state.message} status={TDashboardAlertStatus.Danger} />
-        <Button type="button" onPress={dashboard.reload}>
+        <Button className="rounded-md" type="button" onPress={dashboard.reload}>
           Try again
         </Button>
       </DashboardShell>
     )
   }
 
-  const showsWorkingAlert =
-    state.pending !== TPendingAction.None && state.pending !== TPendingAction.SavingSettings
-
   return (
     <DashboardShell>
-      <header className="workspace-header">
-        <div>
-          <h1 className="workspace-title">OpenCode Go</h1>
-          <p className="workspace-subtitle">Launch Claude Code</p>
-          <p className="workspace-copy">
-            Configure the connection, choose models, and launch Claude Code through the local gateway.
-          </p>
-        </div>
+      <header className="py-2">
+        <h1 className="text-4xl font-bold leading-tight text-foreground">OpenCode Go</h1>
       </header>
       <StatusStrip providerLabel="OpenCode Go" snapshot={state.snapshot} />
       {state.errorMessage && (
         <DashboardAlert message={state.errorMessage} status={TDashboardAlertStatus.Danger} />
       )}
-      {state.notice && <DashboardAlert message={state.notice} status={TDashboardAlertStatus.Success} />}
       <ConnectionSection
         apiKey={state.apiKey}
         pending={state.pending}
@@ -67,9 +57,6 @@ export const Dashboard: FC = () => {
         onSaveSettings={dashboard.saveSettings}
         onLaunch={dashboard.launch}
       />
-      {showsWorkingAlert && (
-        <DashboardAlert message="Working" status={TDashboardAlertStatus.Accent} />
-      )}
     </DashboardShell>
   )
 }
