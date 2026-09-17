@@ -9,9 +9,8 @@ fn public_model_id_keeps_provider_and_model() {
 }
 
 #[test]
-fn fallback_catalog_includes_default_models() {
+fn fallback_catalog_is_empty_until_authenticated_discovery() {
     let catalog = OpenCodeGoBackend::fallback_catalog();
 
-    assert!(catalog.iter().any(|model| model.id == "qwen3.8-max"));
-    assert!(catalog.iter().any(|model| model.id == "qwen3.8-flash"));
+    assert!(catalog.is_empty());
 }

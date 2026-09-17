@@ -97,7 +97,7 @@ pub struct ProviderHeader {
 }
 
 /// Carries a normalized gateway request into a provider adapter.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ProviderRequest {
     /// Forwardable inbound headers.
     pub headers: Vec<ProviderHeader>,

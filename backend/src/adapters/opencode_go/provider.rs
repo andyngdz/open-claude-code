@@ -33,7 +33,7 @@ impl OpenCodeGoProvider {
         })
     }
 
-    /// Returns the checked-in catalog used before the first refresh.
+    /// Returns an empty catalog before the first authenticated refresh.
     pub(crate) fn fallback_catalog() -> Vec<ModelCatalogEntry> {
         fallback_catalog()
     }

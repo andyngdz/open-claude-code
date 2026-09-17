@@ -136,11 +136,8 @@ fn runtime_models(
     runtime_models
 }
 
-/// Replaces an empty catalog with the fallback catalog.
+/// Keeps the upstream catalog unchanged, including a legitimate empty response.
 pub(super) fn nonempty_catalog(catalog: Vec<ModelCatalogEntry>) -> Vec<ModelCatalogEntry> {
-    if catalog.is_empty() {
-        return OpenCodeGoBackend::fallback_catalog();
-    }
     catalog
 }
 

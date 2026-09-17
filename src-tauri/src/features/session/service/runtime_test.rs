@@ -1,12 +1,11 @@
 use super::{nonempty_catalog, runtime_models};
-use open_claude_code_backend::{ModelCatalogEntry, OpenCodeGoBackend};
+use open_claude_code_backend::ModelCatalogEntry;
 
 #[test]
-fn empty_catalog_uses_the_fallback_list() {
+fn empty_catalog_remains_empty_until_upstream_discovery_returns_models() {
     let catalog = nonempty_catalog(Vec::new());
 
-    assert!(!catalog.is_empty());
-    assert_eq!(catalog, OpenCodeGoBackend::fallback_catalog());
+    assert!(catalog.is_empty());
 }
 
 #[test]
