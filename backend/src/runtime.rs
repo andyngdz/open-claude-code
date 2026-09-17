@@ -76,7 +76,7 @@ impl OpenCodeGoBackend {
         self.provider.refresh_catalog().await.map_err(Into::into)
     }
 
-    /// Returns the checked-in model catalog used before provider discovery succeeds.
+    /// Returns an empty catalog before provider discovery succeeds.
     pub fn fallback_catalog() -> Vec<ModelCatalogEntry> {
         OpenCodeGoProvider::fallback_catalog()
     }

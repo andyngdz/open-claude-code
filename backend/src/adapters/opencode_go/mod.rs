@@ -3,6 +3,7 @@
 mod catalog;
 mod client;
 mod credential;
+mod protocol;
 mod provider;
 
 pub(crate) use provider::{OpenCodeGoProvider, OPENCODE_GO_PROVIDER_ID};

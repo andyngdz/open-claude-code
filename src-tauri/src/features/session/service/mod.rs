@@ -46,11 +46,18 @@ impl AppSession {
                     | SettingsError::Lock(_) => SessionError::Settings,
                 }
             })?;
-        let settings = settings_store
+        let mut settings = settings_store
             .load()
             .map_err(|_source| SessionError::Settings)?;
         let catalog = runtime::published_catalog(&settings);
         let backend = OpenCodeGoBackend::start(catalog, settings.custom_models.clone()).await?;
+        if let Ok(Some(api_key)) = backend.load_saved_api_key().await {
+            if let Ok(catalog) = backend.save_api_key(api_key.expose_secret()).await {
+                settings.cached_models = runtime::nonempty_catalog(catalog);
+                settings.catalog_refreshed_at_epoch_seconds =
+                    Some(crate::features::settings::current_epoch_seconds());
+            }
+        }
         let state = AppSessionState {
             backend,
             settings,
@@ -58,6 +65,8 @@ impl AppSession {
             _instance_guard: instance_guard,
             processes: ProcessRegistry::default(),
         };
+        runtime::save_settings(&state)?;
+        runtime::configure_gateway(&state).await;
         runtime::publish_runtime(&state)?;
 
         Ok(Self {

@@ -6,8 +6,8 @@ mod service;
 mod traits;
 
 pub(crate) use domain::{
-    AuthMethod, ProviderDescriptor, ProviderHeader, ProviderId, ProviderProtocol, ProviderRequest,
-    ProviderResponse,
+    AuthMethod, ProviderBodyStream, ProviderDescriptor, ProviderHeader, ProviderId,
+    ProviderProtocol, ProviderRequest, ProviderResponse,
 };
 pub use domain::{ModelCatalogEntry, ProviderConnectionState};
 pub(crate) use errors::ProviderError;
