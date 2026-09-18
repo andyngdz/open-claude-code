@@ -1,3 +1,4 @@
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 use super::{
@@ -46,7 +47,7 @@ fn model_flag_parser_accepts_equals_and_rejects_unknown_args() {
 }
 
 #[test]
-fn runtime_file_round_trips_without_a_world_readable_mode() {
+fn runtime_file_round_trips() {
     let directory =
         std::env::temp_dir().join(format!("open-claude-code-runtime-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&directory);
@@ -61,11 +62,13 @@ fn runtime_file_round_trips_without_a_world_readable_mode() {
 
     endpoint.write(&path).unwrap();
     let loaded = RuntimeEndpoint::read(&path).unwrap();
-    let mode = std::fs::metadata(&path).unwrap().permissions().mode();
-
     assert_eq!(loaded.base_url, endpoint.base_url);
     assert_eq!(loaded.token, "local-token");
-    assert_eq!(mode & 0o077, 0);
+    #[cfg(unix)]
+    assert_eq!(
+        std::fs::metadata(&path).unwrap().permissions().mode() & 0o077,
+        0
+    );
     RuntimeEndpoint::remove(&path).unwrap();
     std::fs::remove_dir_all(&directory).unwrap();
 }
