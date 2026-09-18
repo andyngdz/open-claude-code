@@ -40,26 +40,26 @@ rounded:
   selected-nav: "8px"
 spacing:
   compact: "8px"
-  control: "12px"
+  control: "16px"
   section: "16px"
-  panel: "20px"
+  panel: "24px"
   page: "32px"
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.text}"
     rounded: "{rounded.field}"
-    padding: "12px 28px"
+    padding: "8px 24px"
   button-secondary:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.text}"
     rounded: "{rounded.field}"
-    padding: "12px 28px"
+    padding: "8px 24px"
   button-danger:
     backgroundColor: "transparent"
     textColor: "{colors.danger}"
     rounded: "{rounded.field}"
-    padding: "12px 28px"
+    padding: "8px 24px"
   panel-card:
     backgroundColor: "{colors.panel}"
     rounded: "{rounded.panel}"
@@ -68,7 +68,7 @@ components:
     backgroundColor: "{colors.field}"
     textColor: "{colors.text}"
     rounded: "{rounded.field}"
-    padding: "12px 16px"
+    padding: "8px 16px"
 ---
 
 # Design System: Open Claude Code
@@ -136,7 +136,7 @@ The palette uses cool dark layers to keep configuration work calm, while cobalt 
 
 The desktop shell uses a persistent left provider sidebar and a flexible main workspace. The main column is centered with a comfortable maximum reading width, while cards stack in the order users complete the task: connection first, model configuration second, launch last.
 
-Use 8px as the compact rhythm, 16px between related form groups, 20px inside cards, and 32px around the main workspace. On narrow screens, the sidebar becomes a horizontal or stacked top region and controls collapse from multi-column to one column. Every interactive control keeps a clear label and full-width touch target.
+Use 8px as the compact rhythm, 16px between related form groups, 24px inside cards, and 32px around the main workspace. On narrow screens, the sidebar becomes a horizontal or stacked top region and controls collapse from multi-column to one column. Every interactive control keeps a clear label and full-width touch target.
 
 ## Elevation & Depth
 
@@ -161,13 +161,13 @@ Panels use restrained 8px corners. Inputs, selects, and buttons use 6px corners 
 
 ### Status Strip
 
-- **Style:** A bordered horizontal row that summarizes connection, provider, model availability, local gateway address, and launch readiness.
+- **Style:** A bordered horizontal row that summarizes connection, provider, and model availability.
 - **Color:** Green dot and text communicate ready state. The rest remains neutral.
 - **Behavior:** Status is factual and compact. It does not duplicate action controls.
 
 ### Buttons
 
-- **Primary:** Launch Blue background, Paper White label, 12px by 28px padding, and 6px corners.
+- **Primary:** Launch Blue background, Paper White label, 8px by 24px padding, and 6px corners.
 - **Secondary:** Panel Slate surface with Structure Line border and Paper White label.
 - **Danger:** Transparent surface with Danger red label and border. Use for Disconnect only.
 - **Hover / Focus:** Brighten primary blue slightly. Focus uses a visible blue ring with enough contrast against the dark surface.
@@ -177,7 +177,7 @@ Panels use restrained 8px corners. Inputs, selects, and buttons use 6px corners 
 - **Corner Style:** Restrained 8px corners.
 - **Background:** Panel Slate on Night Canvas.
 - **Border:** 1px Structure Line.
-- **Internal Padding:** 20px, with 16px between form groups.
+- **Internal Padding:** 24px, with 16px between form groups.
 
 ### Inputs / Fields
 
@@ -187,8 +187,8 @@ Panels use restrained 8px corners. Inputs, selects, and buttons use 6px corners 
 
 ### Auto-save Model Settings
 
-- **Style:** A small green confirmation next to the Models heading.
-- **Behavior:** Changing a terminal or model dropdown persists immediately. Do not show a Save settings button.
+- **Style:** Compact status next to the Models heading. Hidden until a save starts. Green only after a successful persist. Danger red only after a failed persist.
+- **Behavior:** Changing a terminal or model dropdown persists immediately. Show Saving, then Saved or Save failed. Do not show a Save settings button.
 
 ## Do's and Don'ts
 

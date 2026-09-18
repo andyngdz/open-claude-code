@@ -16,6 +16,7 @@
     "@hookform/resolvers": "^5.9.1",
     "@tauri-apps/api": "^2.11.1",
     "@tauri-apps/plugin-dialog": "^2.7.3",
+    "clsx": "^2.1.1",
     "es-toolkit": "^1.52.0",
     "lucide-react": "^1.46.0",
     "react": "^19.1.0",

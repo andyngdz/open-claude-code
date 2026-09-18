@@ -7,7 +7,8 @@ import { LaunchSection } from "@/features/dashboard/components/LaunchSection"
 import { TDashboardAlertStatus } from "@/features/dashboard/constants/dashboardLabels"
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
 import { DashboardAlert } from "@/features/dashboard/presentations/DashboardAlert"
-import { TDashboardStatus, TPendingAction } from "@/features/dashboard/schemas/dashboard.schema"
+import { StatusStrip } from "@/features/dashboard/presentations/StatusStrip"
+import { TDashboardStatus } from "@/features/dashboard/schemas/dashboard.schema"
 
 export const Dashboard: FC = () => {
   const dashboard = useDashboard()
@@ -24,9 +25,9 @@ export const Dashboard: FC = () => {
   if (state.status === TDashboardStatus.Failed) {
     return (
       <DashboardShell>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+        <h1 className="text-lg font-semibold">OpenCode Go</h1>
         <DashboardAlert message={state.message} status={TDashboardAlertStatus.Danger} />
-        <Button type="button" onPress={dashboard.reload}>
+        <Button className="rounded-md" type="button" onPress={dashboard.reload}>
           Try again
         </Button>
       </DashboardShell>
@@ -35,14 +36,13 @@ export const Dashboard: FC = () => {
 
   return (
     <DashboardShell>
-      <header className="flex flex-col gap-2">
-        <p className="text-sm text-muted">OpenCode Go</p>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+      <header className="py-2">
+        <h1 className="text-4xl font-bold leading-tight text-foreground">OpenCode Go</h1>
       </header>
+      <StatusStrip providerLabel="OpenCode Go" snapshot={state.snapshot} />
       {state.errorMessage && (
         <DashboardAlert message={state.errorMessage} status={TDashboardAlertStatus.Danger} />
       )}
-      {state.notice && <DashboardAlert message={state.notice} status={TDashboardAlertStatus.Success} />}
       <ConnectionSection
         apiKey={state.apiKey}
         pending={state.pending}
@@ -57,9 +57,6 @@ export const Dashboard: FC = () => {
         onSaveSettings={dashboard.saveSettings}
         onLaunch={dashboard.launch}
       />
-      {state.pending !== TPendingAction.None && (
-        <DashboardAlert message="Working" status={TDashboardAlertStatus.Accent} />
-      )}
     </DashboardShell>
   )
 }

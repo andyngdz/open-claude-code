@@ -1,3 +1,4 @@
+import { clsx } from "clsx"
 import { useMemo } from "react"
 import type { FC, ReactNode } from "react"
 
@@ -24,7 +25,12 @@ export const ProviderPanel: FC<IProviderPanelProps> = ({
   }, [children, provider])
 
   return (
-    <main className="app-shell app-stack">
+    <main
+      className={clsx(
+        "mx-auto flex w-full max-w-7xl flex-col gap-6",
+        "p-4 md:p-8",
+      )}
+    >
       {providerBody}
     </main>
   )

@@ -21,7 +21,6 @@ type TDashboardState =
       snapshot: IDashboardSnapshot
       apiKey: string
       pending: TPendingAction
-      notice?: string
       errorMessage?: string
     }
 
@@ -31,7 +30,7 @@ interface IUseDashboardReturn {
   saveApiKey: ValueChanged<string, Promise<boolean>>
   disconnect: () => Promise<void>
   refreshCatalog: () => Promise<void>
-  saveSettings: ValueChanged<ILaunchForm, Promise<void>>
+  saveSettings: ValueChanged<ILaunchForm, Promise<boolean>>
   launch: ValueChanged<ILaunchForm, Promise<void>>
 }
 
@@ -67,7 +66,7 @@ export const useDashboard = () => {
     async (pending: TPendingAction, action: () => Promise<IDashboardSnapshot>, notice?: string) => {
       setState((current) => {
         if (current.status !== TDashboardStatus.Ready) return current
-        return { ...current, pending, errorMessage: undefined, notice: undefined }
+        return { ...current, pending, errorMessage: undefined }
       })
       try {
         const snapshot = await action()
@@ -77,9 +76,9 @@ export const useDashboard = () => {
             ...current,
             snapshot,
             pending: TPendingAction.None,
-            notice,
           }
         })
+        if (isString(notice)) toast.success(notice)
         return true
       } catch (error) {
         const message = readCommandError(error)
@@ -144,10 +143,9 @@ export const useDashboard = () => {
 
   const saveSettings = useCallback(
     async (values: ILaunchForm) => {
-      await runAction(
+      return await runAction(
         TPendingAction.SavingSettings,
         () => dashboardService.saveSettings(values),
-        "Settings saved.",
       )
     },
     [runAction],

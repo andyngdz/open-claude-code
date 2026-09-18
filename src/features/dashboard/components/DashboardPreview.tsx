@@ -37,14 +37,13 @@ const previewSnapshot = {
 
 export const DashboardPreview: FC = () => {
   const saveApiKey = async () => true
-  const saveSettings = async (_values: ILaunchForm) => {}
+  const saveSettings = async (_values: ILaunchForm) => true
   const launch = async () => {}
 
   return (
     <DashboardShell>
-      <header className="flex flex-col gap-2">
-        <p className="text-sm text-muted">OpenCode Go</p>
-        <h1 className="text-lg font-semibold">Launch Claude Code</h1>
+      <header className="py-2">
+        <h1 className="text-4xl font-bold leading-tight text-foreground">OpenCode Go</h1>
       </header>
       <ConnectionSection
         apiKey=""

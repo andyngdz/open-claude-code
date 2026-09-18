@@ -1,29 +1,39 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
-html.dark,
-html[data-theme="dark"] {
-  --field-border-width: 1px;
-  --field-border: var(--muted);
-  --field-border-hover: var(--foreground);
-  --field-border-focus: var(--focus);
-  --field-background: var(--background);
-}
-
-@layer components {
-  .app-frame {
-    @apply flex min-h-screen flex-col bg-background text-foreground md:flex-row;
-  }
-
-  .app-sidebar {
-    @apply w-full shrink-0 border-b border-border p-3 md:sticky md:top-0 md:h-screen md:w-64 md:overflow-y-auto md:border-r md:border-b-0;
-  }
-
-  .app-shell {
-    @apply mx-auto w-full max-w-2xl p-4;
-  }
-
-  .app-stack {
-    @apply flex flex-col gap-4;
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: #07101d;
+    --background-secondary: #0b1727;
+    --foreground: #f3f7ff;
+    --surface: #101d2d;
+    --surface-foreground: #f3f7ff;
+    --overlay: #101d2d;
+    --overlay-foreground: #f3f7ff;
+    --muted: #a9bdd8;
+    --default: #1c2c40;
+    --default-foreground: #f3f7ff;
+    --accent: #1478ff;
+    --accent-foreground: #f3f7ff;
+    --accent-hover: #2a88ff;
+    --success: #48e6a4;
+    --success-foreground: #07101d;
+    --danger: #ff5f75;
+    --danger-foreground: #f3f7ff;
+    --border: #29415d;
+    --separator: #29415d;
+    --focus: #1478ff;
+    --field-border-width: 1px;
+    --field-border: #29415d;
+    --field-border-hover: #7790ad;
+    --field-border-focus: #1478ff;
+    --field-background: #0c1827;
+    --field-foreground: #f3f7ff;
+    --field-placeholder: #7790ad;
+    --radius: 0.5rem;
+    --field-radius: 0.375rem;
+    --surface-shadow: none;
+    --field-shadow: none;
   }
 }

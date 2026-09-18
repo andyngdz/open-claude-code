@@ -23,6 +23,9 @@ importers:
       '@tauri-apps/plugin-dialog':
         specifier: ^2.7.3
         version: 2.7.3
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       es-toolkit:
         specifier: ^1.52.0
         version: 1.52.0
