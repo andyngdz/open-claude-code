@@ -1,6 +1,6 @@
 [package]
 name = "open-claude-code"
-version = "0.1.1"
+version = "0.1.2"
 description = "Launch Claude Code through the AI provider you choose."
 edition = "2021"
 
