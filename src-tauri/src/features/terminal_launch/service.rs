@@ -69,8 +69,18 @@ fn exec_claude(endpoint: &RuntimeEndpoint, model_id: &str) -> Result<(), CliErro
         .arg(crate::constants::MODEL_FLAG)
         .arg(open_code_go_public_model_id(model_id));
     apply_proxy_env(&mut command, &proxy_env);
-    let error = std::os::unix::process::CommandExt::exec(&mut command);
-    Err(CliError::Spawn(error))
+    run_claude(&mut command).map_err(CliError::Spawn)
+}
+
+#[cfg(unix)]
+fn run_claude(command: &mut Command) -> io::Result<()> {
+    let error = std::os::unix::process::CommandExt::exec(command);
+    Err(error)
+}
+
+#[cfg(not(unix))]
+fn run_claude(command: &mut Command) -> io::Result<()> {
+    command.status().map(|_| ())
 }
 
 #[cfg(test)]

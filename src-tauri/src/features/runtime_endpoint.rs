@@ -1,4 +1,7 @@
-use std::{fs, io::Write, os::unix::fs::OpenOptionsExt, path::Path};
+use std::{fs, io::Write, path::Path};
+
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -66,12 +69,11 @@ fn write_private(path: &Path, bytes: &[u8]) -> Result<(), RuntimeEndpointError> 
 }
 
 fn write_private_temporary(path: &Path, bytes: &[u8]) -> Result<(), RuntimeEndpointError> {
-    let mut file = fs::OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .mode(0o600)
-        .open(path)
-        .map_err(RuntimeEndpointError::Write)?;
+    let mut options = fs::OpenOptions::new();
+    options.create_new(true).write(true);
+    #[cfg(unix)]
+    options.mode(0o600);
+    let mut file = options.open(path).map_err(RuntimeEndpointError::Write)?;
     file.write_all(bytes).map_err(RuntimeEndpointError::Write)?;
     file.sync_all().map_err(RuntimeEndpointError::Write)
 }
