@@ -47,15 +47,27 @@ select_asset_url() {
 }
 
 install_appimage_launcher() {
+  appimage_path="$1"
   data_directory="${XDG_DATA_HOME:-${HOME}/.local/share}"
   launcher_directory="${data_directory}/applications"
   desktop_entry_path="${launcher_directory}/open-claude-code.desktop"
-  icon_directory="${data_directory}/icons/hicolor/512x512/apps"
+  icon_directory="${data_directory}/icons/hicolor/128x128/apps"
   icon_path="${icon_directory}/open-claude-code.png"
 
   mkdir -p "$launcher_directory" "$icon_directory"
   download_asset "$launcher_file_url" "$desktop_entry_path"
-  download_asset "$launcher_icon_url" "$icon_path"
+
+  extraction_directory="${temporary_directory}/appimage-icons"
+  extracted_icon_path="${extraction_directory}/squashfs-root/usr/share/icons/hicolor/128x128/apps/open-claude-code.png"
+  mkdir -p "$extraction_directory"
+  if (
+    cd "$extraction_directory" &&
+    "$appimage_path" --appimage-extract 'usr/share/icons/hicolor/128x128/apps/open-claude-code.png' >/dev/null 2>&1
+  ) && [ -f "$extracted_icon_path" ]; then
+    cp "$extracted_icon_path" "$icon_path"
+  else
+    download_asset "$launcher_icon_url" "$icon_path"
+  fi
 }
 
 release_metadata="$(fetch_release_metadata)"
@@ -134,7 +146,7 @@ case "$operating_system" in
     download_asset "$asset_url" "$package_path"
     $install_command "$package_path"
     if [ "$install_command" = 'chmod +x' ]; then
-      install_appimage_launcher
+      install_appimage_launcher "$package_path"
       printf '%s\n' "Installed Open Claude Code. Find it in your app launcher, or run: $package_path"
     else
       printf '%s\n' "Installed Open Claude Code."
