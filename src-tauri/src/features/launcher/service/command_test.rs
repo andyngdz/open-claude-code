@@ -2,7 +2,9 @@ use std::path::{Path, PathBuf};
 
 use open_claude_code_backend::open_code_go_public_model_id;
 
-use super::{command_spec_for_terminal, GHOSTTY_OWN_WINDOW, MODEL_ARGUMENT};
+use super::{
+    command_spec_for_terminal, should_check_terminal_liveness, GHOSTTY_OWN_WINDOW, MODEL_ARGUMENT,
+};
 use crate::features::launcher::TerminalKind;
 
 #[test]
@@ -55,4 +57,10 @@ fn kitty_uses_the_selected_workspace_and_model() {
         command.arguments[4],
         open_code_go_public_model_id("minimax-m3")
     );
+}
+
+#[test]
+fn system_default_does_not_require_terminal_liveness_check() {
+    assert!(!should_check_terminal_liveness(TerminalKind::SystemDefault));
+    assert!(should_check_terminal_liveness(TerminalKind::Ghostty));
 }
