@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Install Open Claude Code and launch Claude Code through a local OpenCode Go gateway." />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Install Open Claude Code</title>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="#install" aria-label="Open Claude Code install guide">
+          <img src="assets/icon.svg" alt="" width="36" height="36" />
+          <span>Open Claude Code</span>
+        </a>
+        <a class="release-link" href="https://github.com/andyngdz/open-claude-code/releases/latest">Latest release</a>
+      </header>
+
+      <section class="hero" aria-labelledby="install-title">
+        <p class="eyebrow">Desktop companion for Claude Code</p>
+        <h1 id="install-title">Install Open Claude Code</h1>
+        <p class="hero-copy">Choose an OpenCode Go model once, then launch Claude Code through your local gateway.</p>
+        <div class="command-card">
+          <code id="install-command">curl -fsSL https://andyngdz.github.io/open-claude-code/install.sh | sh</code>
+          <button class="copy-button" type="button" data-copy-target="install-command">Copy command</button>
+        </div>
+        <p class="command-note">For macOS and common Linux distributions. The script fetches the latest stable release.</p>
+      </section>
+
+      <section class="platform-grid" aria-label="Platform install guides">
+        <article class="platform-card">
+          <span class="platform-kicker">macOS</span>
+          <h2>Apple Silicon and Intel</h2>
+          <p>Run the command above. It downloads the matching DMG and copies the app to Applications.</p>
+        </article>
+        <article class="platform-card">
+          <span class="platform-kicker">Linux</span>
+          <h2>Debian, Ubuntu, Fedora and more</h2>
+          <p>The script picks DEB on APT systems, RPM on DNF systems, then falls back to an AppImage.</p>
+        </article>
+        <article class="platform-card">
+          <span class="platform-kicker">Windows</span>
+          <h2>Windows 10 and later</h2>
+          <p>Download the current MSI installer, run it, then open Open Claude Code from the Start menu.</p>
+          <a class="text-link" href="https://github.com/andyngdz/open-claude-code/releases/latest">Download Windows installer</a>
+        </article>
+      </section>
+
+      <section class="after-install" aria-labelledby="after-install-title">
+        <div>
+          <p class="eyebrow">After installation</p>
+          <h2 id="after-install-title">Start a Claude Code session</h2>
+        </div>
+        <ol>
+          <li>Open Open Claude Code and save an OpenCode Go API key.</li>
+          <li>Select a model and workspace.</li>
+          <li>Launch Claude Code from the app.</li>
+        </ol>
+      </section>
+
+      <section class="manual-install" aria-labelledby="manual-install-title">
+        <p class="eyebrow">Need a different file?</p>
+        <h2 id="manual-install-title">Browse every release asset</h2>
+        <p>The release page includes DMG, DEB, RPM, AppImage, MSI and EXE installers.</p>
+        <a class="release-button" href="https://github.com/andyngdz/open-claude-code/releases/latest">Open latest release</a>
+      </section>
+
+      <footer>
+        <a href="https://github.com/andyngdz/open-claude-code">View source on GitHub</a>
+      </footer>
+    </main>
+    <script>
+      const copyButton = document.querySelector('[data-copy-target]');
+      const installCommand = document.getElementById(copyButton.dataset.copyTarget);
+
+      copyButton.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(installCommand.textContent);
+        copyButton.textContent = 'Copied';
+        window.setTimeout(() => {
+          copyButton.textContent = 'Copy command';
+        }, 1600);
+      });
+    </script>
+  </body>
+</html>

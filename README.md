@@ -21,6 +21,11 @@ key, choose a model and workspace, and open Claude Code through a local
 gateway. Closing the settings window keeps the gateway running; choose Quit
 from the tray menu to stop it. Other providers are not implemented yet.
 
+## Install
+
+See the [installation guide](https://andyngdz.github.io/open-claude-code/) for
+macOS, Linux, and Windows installers.
+
 ## Development
 
 Install dependencies and start the desktop app:
