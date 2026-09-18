@@ -46,7 +46,10 @@ pub(crate) fn launch_claude(
         proxy_token,
         aliases,
     )?;
-    ensure_terminal_stayed_open(&mut child)?;
+    // The system-default helper can exit after delegating to another terminal.
+    if should_check_terminal_liveness(terminal) {
+        ensure_terminal_stayed_open(&mut child)?;
+    }
     let process_id = child.id();
     registry.register(child)?;
 
@@ -146,6 +149,10 @@ fn command_spec_for_terminal(
         program: terminal_path,
         arguments,
     }
+}
+
+fn should_check_terminal_liveness(terminal: TerminalKind) -> bool {
+    terminal != TerminalKind::SystemDefault
 }
 
 fn ensure_terminal_stayed_open(child: &mut std::process::Child) -> Result<(), LauncherError> {

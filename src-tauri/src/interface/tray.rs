@@ -1,3 +1,4 @@
+use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, WindowEvent};
@@ -6,14 +7,15 @@ use crate::features::session::{
     read_tray_action, show_settings, TrayAction, MAIN_WINDOW, QUIT_ID, SETTINGS_ID,
 };
 
+const TRAY_ICON_BYTES: &[u8] =
+    include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/icons/tray.png"));
+
 /// Adds the tray icon and keeps the gateway alive when the window closes.
 pub(crate) fn install(app: &tauri::App) -> tauri::Result<()> {
     let settings = MenuItem::with_id(app, SETTINGS_ID, "Settings", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, QUIT_ID, "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&settings, &quit])?;
-    let Some(icon) = app.default_window_icon().cloned() else {
-        return Err(std::io::Error::other("tray icon is missing").into());
-    };
+    let icon = Image::from_bytes(TRAY_ICON_BYTES)?;
 
     TrayIconBuilder::with_id(crate::constants::APP_NAME)
         .tooltip("Open Claude Code")
