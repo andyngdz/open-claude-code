@@ -4,8 +4,6 @@ set -eu
 repository="andyngdz/open-claude-code"
 release_api="https://api.github.com/repos/${repository}/releases/latest"
 release_page="https://github.com/${repository}/releases/latest"
-launcher_file_url="https://andyngdz.github.io/open-claude-code/open-claude-code.desktop"
-launcher_icon_url="https://andyngdz.github.io/open-claude-code/assets/icon.png"
 temporary_directory="$(mktemp -d)"
 
 cleanup() {
@@ -55,18 +53,22 @@ install_appimage_launcher() {
   icon_path="${icon_directory}/open-claude-code.png"
 
   mkdir -p "$launcher_directory" "$icon_directory"
-  download_asset "$launcher_file_url" "$desktop_entry_path"
 
-  extraction_directory="${temporary_directory}/appimage-icons"
+  extraction_directory="${temporary_directory}/appimage-assets"
+  extracted_desktop_entry_path="${extraction_directory}/squashfs-root/usr/share/applications/Open Claude Code.desktop"
   extracted_icon_path="${extraction_directory}/squashfs-root/usr/share/icons/hicolor/128x128/apps/open-claude-code.png"
   mkdir -p "$extraction_directory"
   if (
     cd "$extraction_directory" &&
+    "$appimage_path" --appimage-extract 'usr/share/applications' >/dev/null 2>&1 &&
     "$appimage_path" --appimage-extract 'usr/share/icons/hicolor/128x128/apps/open-claude-code.png' >/dev/null 2>&1
-  ) && [ -f "$extracted_icon_path" ]; then
+  ) && [ -f "$extracted_desktop_entry_path" ] && [ -f "$extracted_icon_path" ]; then
+    sed 's|^Exec=.*|Exec=/bin/sh -c "\\\\$HOME/.local/bin/open-claude-code.AppImage"|' \
+      "$extracted_desktop_entry_path" > "$desktop_entry_path"
     cp "$extracted_icon_path" "$icon_path"
   else
-    download_asset "$launcher_icon_url" "$icon_path"
+    printf '%s\n' "Could not extract the AppImage launcher files. Download manually: $release_page" >&2
+    return 1
   fi
 }
 
