@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">Open Claude Code</title>
+  <desc id="description">A terminal prompt connected to a local gateway.</desc>
+  <defs>
+    <linearGradient id="surface" x1="20" y1="16" x2="108" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D2939"/>
+      <stop offset="1" stop-color="#101828"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="104" height="104" rx="28" fill="url(#surface)"/>
+  <path d="M38 47 55 64 38 81" fill="none" stroke="#F8FAFC" stroke-linecap="round" stroke-linejoin="round" stroke-width="10"/>
+  <path d="M64 82h25" fill="none" stroke="#F8FAFC" stroke-linecap="round" stroke-width="10"/>
+  <circle cx="93" cy="38" r="10" fill="#38D39F"/>
+  <path d="M85.5 44.5 72 58" fill="none" stroke="#38D39F" stroke-linecap="round" stroke-width="6"/>
+</svg>
