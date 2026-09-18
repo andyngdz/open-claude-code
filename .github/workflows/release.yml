@@ -76,7 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: Open Claude Code ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
           releaseBody: See the assets below to install this release.
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
