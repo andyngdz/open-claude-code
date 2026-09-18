@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Open Claude Code
+Comment=Launch Claude Code through a local OpenCode Go gateway
+Exec=/bin/sh -c "\\$HOME/.local/bin/open-claude-code.AppImage"
+Terminal=false
+Categories=Development;
+StartupNotify=true

@@ -23,8 +23,16 @@ from the tray menu to stop it. Other providers are not implemented yet.
 
 ## Install
 
-See the [installation guide](https://andyngdz.github.io/open-claude-code/) for
-macOS, Linux, and Windows installers.
+Install the latest release on macOS or Linux:
+
+```sh
+curl -fsSL https://andyngdz.github.io/open-claude-code/install.sh | sh
+```
+
+The script installs DEB or RPM packages when supported. On other x64 Linux
+distributions, it installs an AppImage in `~/.local/bin` and adds Open Claude
+Code to your app launcher. For Windows installers and manual downloads, see the
+[installation guide](https://andyngdz.github.io/open-claude-code/).
 
 ## Development
 

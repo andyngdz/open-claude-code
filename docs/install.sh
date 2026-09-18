@@ -4,6 +4,7 @@ set -eu
 repository="andyngdz/open-claude-code"
 release_api="https://api.github.com/repos/${repository}/releases/latest"
 release_page="https://github.com/${repository}/releases/latest"
+launcher_file_url="https://andyngdz.github.io/open-claude-code/open-claude-code.desktop"
 temporary_directory="$(mktemp -d)"
 
 cleanup() {
@@ -42,6 +43,14 @@ download_asset() {
 select_asset_url() {
   asset_pattern="$1"
   printf '%s' "$release_metadata" | grep -o "https://[^\"]*${asset_pattern}" | head -n 1
+}
+
+install_appimage_launcher() {
+  launcher_directory="${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
+  desktop_entry_path="${launcher_directory}/open-claude-code.desktop"
+
+  mkdir -p "$launcher_directory"
+  download_asset "$launcher_file_url" "$desktop_entry_path"
 }
 
 release_metadata="$(fetch_release_metadata)"
@@ -119,7 +128,12 @@ case "$operating_system" in
 
     download_asset "$asset_url" "$package_path"
     $install_command "$package_path"
-    printf '%s\n' "Installed Open Claude Code."
+    if [ "$install_command" = 'chmod +x' ]; then
+      install_appimage_launcher
+      printf '%s\n' "Installed Open Claude Code. Find it in your app launcher, or run: $package_path"
+    else
+      printf '%s\n' "Installed Open Claude Code."
+    fi
     ;;
   *)
     printf '%s\n' "This installer supports macOS and Linux. For Windows, download the MSI from: $release_page" >&2
