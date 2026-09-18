@@ -5,6 +5,7 @@ repository="andyngdz/open-claude-code"
 release_api="https://api.github.com/repos/${repository}/releases/latest"
 release_page="https://github.com/${repository}/releases/latest"
 launcher_file_url="https://andyngdz.github.io/open-claude-code/open-claude-code.desktop"
+launcher_icon_url="https://andyngdz.github.io/open-claude-code/assets/icon.png"
 temporary_directory="$(mktemp -d)"
 
 cleanup() {
@@ -46,11 +47,15 @@ select_asset_url() {
 }
 
 install_appimage_launcher() {
-  launcher_directory="${XDG_DATA_HOME:-${HOME}/.local/share}/applications"
+  data_directory="${XDG_DATA_HOME:-${HOME}/.local/share}"
+  launcher_directory="${data_directory}/applications"
   desktop_entry_path="${launcher_directory}/open-claude-code.desktop"
+  icon_directory="${data_directory}/icons/hicolor/512x512/apps"
+  icon_path="${icon_directory}/open-claude-code.png"
 
-  mkdir -p "$launcher_directory"
+  mkdir -p "$launcher_directory" "$icon_directory"
   download_asset "$launcher_file_url" "$desktop_entry_path"
+  download_asset "$launcher_icon_url" "$icon_path"
 }
 
 release_metadata="$(fetch_release_metadata)"
