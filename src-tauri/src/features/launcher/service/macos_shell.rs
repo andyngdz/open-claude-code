@@ -11,30 +11,16 @@ use super::proxy::ClaudeProxyEnv;
 use super::terminal_args::{sh_quote, MODEL_ARGUMENT};
 use crate::features::errors::LauncherError;
 
-/// Whether a launch shell should change into the workspace first.
-pub(super) enum WorkspaceCd {
-    /// Run `cd` into the workspace before starting the CLI.
-    Include,
-    /// Rely on the terminal's working-directory flag instead.
-    Skip,
-}
-
 /// Builds an export-and-exec shell line for AppleScript `do script` / `write text`.
 pub(super) fn shell_launch_command(
     workspace: &Path,
     claude_path: &Path,
     model_id: &str,
     proxy_env: &ClaudeProxyEnv,
-    workspace_cd: WorkspaceCd,
 ) -> String {
     let public_model = open_code_go_public_model_id(model_id);
     let mut parts = proxy_exports(proxy_env);
-    match workspace_cd {
-        WorkspaceCd::Include => {
-            parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
-        }
-        WorkspaceCd::Skip => {}
-    }
+    parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
     parts.push(format!(
         "exec {} {} {}",
         sh_quote(&claude_path.to_string_lossy()),
@@ -50,16 +36,10 @@ pub(super) fn write_launch_script(
     claude_path: &Path,
     public_model: &str,
     proxy_env: &ClaudeProxyEnv,
-    workspace_cd: WorkspaceCd,
 ) -> Result<PathBuf, LauncherError> {
     let mut parts = vec!["#!/bin/zsh".to_owned()];
     parts.extend(proxy_exports(proxy_env));
-    match workspace_cd {
-        WorkspaceCd::Include => {
-            parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
-        }
-        WorkspaceCd::Skip => {}
-    }
+    parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
     parts.push(format!(
         "exec {} {} {}",
         sh_quote(&claude_path.to_string_lossy()),

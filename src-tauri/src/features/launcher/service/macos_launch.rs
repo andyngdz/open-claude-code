@@ -2,9 +2,7 @@ use std::path::{Path, PathBuf};
 
 use open_claude_code_backend::open_code_go_public_model_id;
 
-use super::macos_shell::{
-    applescript_escape, shell_launch_command, write_launch_script, WorkspaceCd,
-};
+use super::macos_shell::{applescript_escape, shell_launch_command, write_launch_script};
 use super::proxy::ClaudeProxyEnv;
 use super::terminal_args::{
     CommandSpec, DIRECTORY_ARGUMENT, EXECUTE_ARGUMENT, WORKING_DIRECTORY_ARGUMENT,
@@ -119,13 +117,7 @@ fn osascript_for_app(
     style: OsascriptKind,
 ) -> Result<CommandSpec, LauncherError> {
     let app_name = require_app_name(kind)?;
-    let shell = shell_launch_command(
-        workspace,
-        claude_path,
-        model_id,
-        proxy_env,
-        WorkspaceCd::Include,
-    );
+    let shell = shell_launch_command(workspace, claude_path, model_id, proxy_env);
     let escaped = applescript_escape(&shell);
     let script = match style {
         OsascriptKind::AppleTerminal => {
@@ -151,13 +143,7 @@ fn open_with_wrapper(
 ) -> Result<CommandSpec, LauncherError> {
     let app_name = require_app_name(kind)?;
     let public_model = open_code_go_public_model_id(model_id);
-    let wrapper = write_launch_script(
-        workspace,
-        claude_path,
-        &public_model,
-        proxy_env,
-        WorkspaceCd::Skip,
-    )?;
+    let wrapper = write_launch_script(workspace, claude_path, &public_model, proxy_env)?;
     let wrapper_value = wrapper.to_string_lossy().into_owned();
     let workspace_value = workspace.to_string_lossy().into_owned();
     let mut arguments = vec!["-na".to_owned(), app_name.to_owned(), "--args".to_owned()];
@@ -194,13 +180,7 @@ fn open_with_command_file(
 ) -> Result<CommandSpec, LauncherError> {
     let app_name = require_app_name(terminal)?;
     let public_model = open_code_go_public_model_id(model_id);
-    let command_file = write_launch_script(
-        workspace,
-        claude_path,
-        &public_model,
-        proxy_env,
-        WorkspaceCd::Include,
-    )?;
+    let command_file = write_launch_script(workspace, claude_path, &public_model, proxy_env)?;
     Ok(CommandSpec {
         program: PathBuf::from(OPEN_PROGRAM),
         arguments: vec![
