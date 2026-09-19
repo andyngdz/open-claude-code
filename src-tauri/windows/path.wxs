@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLDIR">
+      <!-- The MSI installs perMachine, so the PATH entry has to be machine-wide.
+           A user entry would only reach the account that ran the installer. -->
+      <Component Id="AddOpenClaudeCodeToPath" Guid="{7E9B475A-AFC4-4085-82E1-B403889CAD21}" KeyPath="yes">
+        <Environment
+          Id="OpenClaudeCodePath"
+          Name="PATH"
+          Value="[INSTALLDIR]"
+          Permanent="no"
+          Part="last"
+          Action="set"
+          System="yes"
+        />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>
