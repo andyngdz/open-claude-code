@@ -5,7 +5,10 @@ use secrecy::ExposeSecret;
 
 use super::super::{DashboardSnapshot, SessionError};
 use crate::features::{
-    launcher::{list_available_terminals, new_launch_session_id, LaunchClaudeInput},
+    launcher::{
+        list_available_terminals, new_launch_session_id, LaunchClaudeInput, TerminalKind,
+        TerminalOption,
+    },
     runtime_endpoint::{RuntimeEndpoint, RuntimeModel},
     settings::{current_epoch_seconds, AppSettings, ModelAliasMapping},
 };
@@ -66,17 +69,26 @@ pub(super) async fn configure_gateway(inner: &AppSessionState) {
 
 /// Builds the dashboard snapshot from the current session.
 pub(super) async fn snapshot_from_state(inner: &AppSessionState) -> DashboardSnapshot {
+    let terminals = list_available_terminals();
+    let terminal = coerce_terminal_selection(inner.settings.terminal, &terminals);
     DashboardSnapshot {
         connection: inner.backend.connection_state().await,
         models: published_catalog(&inner.settings),
         custom_models: inner.settings.custom_models.clone(),
         aliases: inner.settings.aliases.clone(),
         launch_model_id: launch_model_id(&inner.settings),
-        terminal: inner.settings.terminal,
-        terminals: list_available_terminals(),
+        terminal,
+        terminals,
         last_workspace: inner.settings.last_workspace.clone(),
         catalog_refreshed_at_epoch_seconds: inner.settings.catalog_refreshed_at_epoch_seconds,
     }
+}
+
+fn coerce_terminal_selection(selected: TerminalKind, terminals: &[TerminalOption]) -> TerminalKind {
+    if terminals.iter().any(|option| option.kind == selected) {
+        return selected;
+    }
+    TerminalKind::SystemDefault
 }
 
 /// Rejects a launch when the provider or model is not ready.

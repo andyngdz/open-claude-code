@@ -1,4 +1,4 @@
-//! Linux terminal discovery and Claude Code process launching.
+//! Terminal discovery and Claude Code process launching.
 
 mod domain;
 mod service;

@@ -9,6 +9,19 @@ fn system_default_is_always_the_first_terminal_choice() {
 }
 
 #[test]
+fn list_available_terminals_only_includes_available_entries() {
+    let terminals = list_available_terminals();
+
+    assert!(
+        terminals.iter().all(|terminal| terminal.is_available)
+            || terminals
+                .iter()
+                .any(|terminal| terminal.kind == TerminalKind::SystemDefault)
+    );
+    assert!(terminals[1..].iter().all(|terminal| terminal.is_available));
+}
+
+#[test]
 fn find_executable_resolves_a_binary_on_path() {
     let sh_path = find_executable("sh").expect("sh should be on PATH in the test environment");
 

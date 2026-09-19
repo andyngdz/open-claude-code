@@ -8,11 +8,16 @@ export enum TConnectionStatus {
 
 export enum TTerminalKind {
   SystemDefault = "system_default",
+  AppleTerminal = "apple_terminal",
+  ITerm2 = "iterm2",
   Ghostty = "ghostty",
-  GnomeTerminal = "gnome_terminal",
-  Konsole = "konsole",
+  Warp = "warp",
   Kitty = "kitty",
   Alacritty = "alacritty",
+  WezTerm = "wezterm",
+  Hyper = "hyper",
+  GnomeTerminal = "gnome_terminal",
+  Konsole = "konsole",
 }
 
 export enum TDashboardStatus {
