@@ -46,7 +46,7 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
               void onPressLaunch()
             }}
           >
-            {isLaunching ? "Opening" : "Launch Claude Code"}
+            Launch Claude Code
           </Button>
         </Card.Content>
       </Card>

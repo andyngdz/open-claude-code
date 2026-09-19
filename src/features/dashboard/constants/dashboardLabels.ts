@@ -10,13 +10,6 @@ export enum TDashboardAlertStatus {
   Danger = "danger",
 }
 
-export enum TAutosaveStatus {
-  Idle = "idle",
-  Saving = "saving",
-  Saved = "saved",
-  Failed = "failed",
-}
-
 export type TAliasField = Exclude<TModelField, TModelField.Launch>
 
 export const MODEL_FAMILIES: TAliasField[] = [
@@ -39,8 +32,6 @@ export const ALIAS_LABELS = {
   [TModelField.Haiku]: "Haiku",
 } satisfies Record<TAliasField, string>
 
-export const AUTOSAVE_STATUS_LABELS = {
-  [TAutosaveStatus.Saving]: "Saving",
-  [TAutosaveStatus.Saved]: "Saved",
-  [TAutosaveStatus.Failed]: "Save failed",
-} satisfies Record<Exclude<TAutosaveStatus, TAutosaveStatus.Idle>, string>
+export const AUTOSAVE_SAVED_TOAST = "Saved"
+
+export const AUTOSAVE_FAILED_TOAST = "Save failed"

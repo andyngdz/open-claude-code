@@ -10,7 +10,6 @@ import { TerminalSelect } from "@/features/dashboard/components/TerminalSelect"
 import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { ALIAS_LABELS, MODEL_FAMILIES, TModelField } from "@/features/dashboard/constants/dashboardLabels"
 import { useLaunchSection } from "@/features/dashboard/hooks/useLaunchSection"
-import { AutosaveStatus } from "@/features/dashboard/presentations/AutosaveStatus"
 import {
   TPendingAction,
   type IDashboardSnapshot,
@@ -31,20 +30,13 @@ export const LaunchSection: FC<ILaunchSectionProps> = ({
   onSaveSettings,
   onLaunch,
 }) => {
-  const { autosaveStatus, isBusy, options, ...methods } = useLaunchSection(
-    snapshot,
-    pending,
-    onSaveSettings,
-  )
+  const { isBusy, options, ...methods } = useLaunchSection(snapshot, pending, onSaveSettings)
 
   return (
     <>
       <Card className={WORKBENCH_CARD_CLASS}>
         <Card.Header className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Card.Title className="text-2xl font-bold">Models</Card.Title>
-            <AutosaveStatus status={autosaveStatus} />
-          </div>
+          <Card.Title className="text-2xl font-bold">Models</Card.Title>
           <Card.Description>
             Choose the terminal, default model, and family aliases Claude Code will use.
           </Card.Description>
