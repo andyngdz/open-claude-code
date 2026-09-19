@@ -8,7 +8,7 @@ use open_claude_code_backend::open_code_go_public_model_id;
 use super::CliError;
 use crate::features::{
     errors::RuntimeEndpointError,
-    launcher::{apply_proxy_env, claude_executable, claude_proxy_env},
+    launcher::{apply_appimage_host_env, apply_proxy_env, claude_executable, claude_proxy_env},
     runtime_endpoint::{default_model_index, resolve_model_choice, RuntimeEndpoint, RuntimeModel},
     settings::SettingsStore,
 };
@@ -68,6 +68,7 @@ fn exec_claude(endpoint: &RuntimeEndpoint, model_id: &str) -> Result<(), CliErro
     command
         .arg(crate::constants::MODEL_FLAG)
         .arg(open_code_go_public_model_id(model_id));
+    apply_appimage_host_env(&mut command);
     apply_proxy_env(&mut command, &proxy_env);
     run_claude(&mut command).map_err(CliError::Spawn)
 }

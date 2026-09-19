@@ -6,6 +6,7 @@ use std::{process::Child, time::Instant};
 use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
+use super::appimage_env::apply_appimage_host_env;
 use super::discovery::is_terminal_launchable;
 use super::proxy::{apply_proxy_env, claude_executable, claude_proxy_env, ClaudeProxyEnv};
 use super::terminal_args::{CommandEnvironment, CommandSpec};
@@ -89,6 +90,7 @@ fn spawn_terminal(
 ) -> Result<std::process::Child, LauncherError> {
     let mut command = Command::new(&command_spec.program);
     command.args(&command_spec.arguments).current_dir(workspace);
+    apply_appimage_host_env(&mut command);
     if command_spec.environment == CommandEnvironment::Proxy {
         apply_proxy_env(&mut command, proxy_env);
     }
