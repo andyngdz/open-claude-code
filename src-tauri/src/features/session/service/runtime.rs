@@ -52,7 +52,8 @@ pub(super) fn remove_runtime(inner: &AppSessionState) -> Result<(), SessionError
 ///
 /// This process loaded its settings once at startup and only the CLI writes
 /// `cli_launch_model_id`, so the value on disk is the newer one. The in-memory
-/// copy of that field is deliberately not authoritative.
+/// copy of that field is not authoritative, and is only written when the
+/// document on disk cannot be read at all.
 pub(super) fn save_settings(inner: &AppSessionState) -> Result<(), SessionError> {
     save_settings_with(&inner.settings_store, &inner.settings).map_err(|_| SessionError::Settings)
 }

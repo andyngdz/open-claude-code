@@ -1,8 +1,30 @@
-use super::{prompt_default_index, select_model, CliError};
+use std::io;
+
+use super::{map_read_error, prompt_default_index, select_model, CliError};
 use crate::features::{
+    errors::RuntimeEndpointError,
     runtime_endpoint::{RuntimeEndpoint, RuntimeModel},
     settings::ModelAliasMapping,
 };
+
+#[test]
+fn a_missing_handshake_tells_the_user_to_open_the_app() {
+    let error = map_read_error(RuntimeEndpointError::Read(io::Error::new(
+        io::ErrorKind::NotFound,
+        "no handshake on disk",
+    )));
+
+    assert!(matches!(error, CliError::NotRunning));
+}
+
+#[test]
+fn a_handshake_that_cannot_be_parsed_tells_the_user_to_restart_the_app() {
+    let parse_error = serde_json::from_str::<serde_json::Value>("not json")
+        .expect_err("invalid JSON should fail to parse");
+    let error = map_read_error(RuntimeEndpointError::Parse(parse_error));
+
+    assert!(matches!(error, CliError::Unreachable));
+}
 
 #[test]
 fn an_unknown_requested_model_is_rejected_before_claude_starts() {
