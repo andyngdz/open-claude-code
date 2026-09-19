@@ -6,6 +6,7 @@ use crate::features::errors::LauncherError;
 
 const LABEL_SYSTEM_DEFAULT: &str = "System default";
 const APP_TERMINAL: &str = "Terminal";
+#[cfg(any(test, target_os = "macos"))]
 const APP_ITERM: &str = "iTerm";
 const LABEL_ITERM2: &str = "iTerm2";
 const APP_GHOSTTY: &str = "Ghostty";
@@ -88,6 +89,7 @@ impl TerminalKind {
     }
 
     /// Returns the macOS bundle identifier used to locate the app.
+    #[cfg(target_os = "macos")]
     pub(crate) fn macos_bundle_id(self) -> Option<&'static str> {
         match self {
             Self::AppleTerminal => Some("com.apple.Terminal"),
@@ -103,6 +105,7 @@ impl TerminalKind {
     }
 
     /// Returns the macOS app name passed to `open -na`.
+    #[cfg(any(test, target_os = "macos"))]
     pub(crate) fn macos_app_name(self) -> Option<&'static str> {
         match self {
             Self::AppleTerminal => Some(APP_TERMINAL),

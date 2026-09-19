@@ -2,9 +2,9 @@
 
 mod command;
 mod discovery;
-#[cfg(target_os = "macos")]
+#[cfg(any(test, target_os = "macos"))]
 mod macos_launch;
-#[cfg(target_os = "macos")]
+#[cfg(any(test, target_os = "macos"))]
 mod macos_shell;
 mod proxy;
 mod terminal_args;

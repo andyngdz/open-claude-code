@@ -1,6 +1,7 @@
 use std::{
     fs,
-    os::unix::fs::PermissionsExt,
+    io::Write,
+    os::unix::fs::OpenOptionsExt,
     path::{Path, PathBuf},
 };
 
@@ -30,14 +31,17 @@ pub(super) fn shell_launch_command(
     parts.join(" && ")
 }
 
-/// Writes an executable temp script that exports proxy env and runs the CLI.
+/// Writes a private, one-time launch script that exports proxy env and runs the CLI.
 pub(super) fn write_launch_script(
     workspace: &Path,
     claude_path: &Path,
     public_model: &str,
     proxy_env: &ClaudeProxyEnv,
 ) -> Result<PathBuf, LauncherError> {
-    let mut parts = vec!["#!/bin/zsh".to_owned()];
+    let mut parts = vec![
+        "#!/bin/zsh".to_owned(),
+        "rm -f -- \"$0\" || exit 1".to_owned(),
+    ];
     parts.extend(proxy_exports(proxy_env));
     parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
     parts.push(format!(
@@ -47,12 +51,16 @@ pub(super) fn write_launch_script(
         sh_quote(public_model)
     ));
     let path = std::env::temp_dir().join(format!("open-claude-launch-{}.command", Uuid::new_v4()));
-    fs::write(&path, parts.join("\n") + "\n").map_err(LauncherError::Spawn)?;
-    let mut permissions = fs::metadata(&path)
-        .map_err(LauncherError::Spawn)?
-        .permissions();
-    permissions.set_mode(0o755);
-    fs::set_permissions(&path, permissions).map_err(LauncherError::Spawn)?;
+    let mut script = fs::OpenOptions::new()
+        .create_new(true)
+        .mode(0o700)
+        .write(true)
+        .open(&path)
+        .map_err(LauncherError::Spawn)?;
+    script
+        .write_all(parts.join("\n").as_bytes())
+        .and_then(|()| script.write_all(b"\n"))
+        .map_err(LauncherError::Spawn)?;
     Ok(path)
 }
 

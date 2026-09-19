@@ -130,6 +130,7 @@ fn osascript_for_app(
     Ok(CommandSpec {
         program: PathBuf::from(OSASCRIPT_PROGRAM),
         arguments: vec!["-e".to_owned(), script],
+        cleanup_path: None,
     })
 }
 
@@ -168,6 +169,7 @@ fn open_with_wrapper(
     Ok(CommandSpec {
         program: PathBuf::from(OPEN_PROGRAM),
         arguments,
+        cleanup_path: Some(wrapper),
     })
 }
 
@@ -188,6 +190,7 @@ fn open_with_command_file(
             app_name.to_owned(),
             command_file.to_string_lossy().into_owned(),
         ],
+        cleanup_path: Some(command_file),
     })
 }
 

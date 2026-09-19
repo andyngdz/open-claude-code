@@ -1,4 +1,4 @@
-use std::{path::Path, process::Command, thread, time::Duration};
+use std::{fs, path::Path, process::Command, thread, time::Duration};
 
 use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
@@ -79,7 +79,15 @@ fn spawn_terminal(
     let mut command = Command::new(&command_spec.program);
     command.args(&command_spec.arguments).current_dir(workspace);
     apply_proxy_env(&mut command, proxy_env);
-    command.spawn().map_err(LauncherError::Spawn)
+    match command.spawn() {
+        Ok(child) => Ok(child),
+        Err(source) => {
+            if let Some(cleanup_path) = &command_spec.cleanup_path {
+                fs::remove_file(cleanup_path).ok();
+            }
+            Err(LauncherError::Spawn(source))
+        }
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -116,6 +124,7 @@ fn resolve_linux_command(
             return Ok(CommandSpec {
                 program: xdg_terminal_path,
                 arguments: claude_arguments(claude_path, model_id),
+                cleanup_path: None,
             });
         }
         let fallback_terminal = concrete_terminals()

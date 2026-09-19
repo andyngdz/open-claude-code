@@ -21,6 +21,7 @@ pub(super) const GHOSTTY_OWN_WINDOW: &str = "--gtk-single-instance=false";
 pub(super) struct CommandSpec {
     pub(super) program: PathBuf,
     pub(super) arguments: Vec<String>,
+    pub(super) cleanup_path: Option<PathBuf>,
 }
 
 /// Builds Linux CLI arguments for a concrete terminal binary.
@@ -55,6 +56,7 @@ pub(super) fn command_spec_for_terminal(
     CommandSpec {
         program: terminal_path,
         arguments,
+        cleanup_path: None,
     }
 }
 
@@ -129,6 +131,7 @@ pub(super) fn claude_arguments(claude_path: &Path, model_id: &str) -> Vec<String
 }
 
 /// Wraps a value in single quotes for POSIX shells.
+#[cfg(any(test, target_os = "macos"))]
 pub(super) fn sh_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\"'\"'"))
 }
