@@ -21,6 +21,10 @@ enum DesktopCommand {
 }
 
 fn main() -> Result<(), tauri::Error> {
+    // Dock/Finder launches get launchd's minimal PATH. Rebuild PATH from the
+    // login shell so Claude Code and terminal binaries remain resolvable.
+    fix_path_env::fix().ok();
+
     let cli = DesktopCli::parse();
     if let Some(DesktopCommand::Launch { model }) = cli.command {
         if let Err(error) = open_claude_code_lib::run_launch(model) {

@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::features::launcher::{TerminalKind, TerminalOption};
 
@@ -40,12 +40,9 @@ pub(super) fn concrete_terminals() -> [TerminalKind; 5] {
     ]
 }
 
-/// Resolves an executable using PATH without invoking a shell.
+/// Resolves an executable on PATH, including Windows PATHEXT handling via `which`.
 pub(super) fn find_executable(executable_name: &str) -> Option<PathBuf> {
-    let search_path = env::var_os("PATH")?;
-    env::split_paths(&search_path)
-        .map(|directory| directory.join(executable_name))
-        .find(|candidate| candidate.is_file())
+    which::which(executable_name).ok()
 }
 
 #[cfg(test)]
