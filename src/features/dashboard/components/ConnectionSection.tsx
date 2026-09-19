@@ -1,7 +1,8 @@
-import { Button, Card, Form } from "@heroui/react"
+import { Card, Form } from "@heroui/react"
 import { FormProvider } from "react-hook-form"
 import type { FC } from "react"
 
+import { LoadingButton } from "@/common/components/LoadingButton"
 import { ApiKeyField } from "@/features/dashboard/components/ApiKeyField"
 import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { useConnectionSection } from "@/features/dashboard/hooks/useConnectionSection"
@@ -50,10 +51,15 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
               <ApiKeyField />
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-2">
-                  <Button className="rounded-md" isDisabled={isBusy} isPending={pending === TPendingAction.SavingKey} type="submit">
+                  <LoadingButton
+                    className="rounded-md"
+                    isDisabled={isBusy}
+                    isPending={pending === TPendingAction.SavingKey}
+                    type="submit"
+                  >
                     Save API key
-                  </Button>
-                  <Button
+                  </LoadingButton>
+                  <LoadingButton
                     className="rounded-md"
                     isDisabled={!isConnected || isBusy}
                     isPending={pending === TPendingAction.Refreshing}
@@ -64,9 +70,9 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
                     }}
                   >
                     Refresh models
-                  </Button>
+                  </LoadingButton>
                 </div>
-                <Button
+                <LoadingButton
                   className="rounded-md"
                   isDisabled={!isConnected || isBusy}
                   isPending={pending === TPendingAction.Disconnecting}
@@ -77,7 +83,7 @@ export const ConnectionSection: FC<IConnectionSectionProps> = ({
                   }}
                 >
                   Disconnect
-                </Button>
+                </LoadingButton>
               </div>
             </div>
           </Form>
