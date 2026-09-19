@@ -26,11 +26,13 @@ pub(crate) enum TerminalKind {
     #[default]
     SystemDefault,
     AppleTerminal,
+    #[serde(rename = "iterm2")]
     ITerm2,
     Ghostty,
     Warp,
     Kitty,
     Alacritty,
+    #[serde(rename = "wezterm")]
     WezTerm,
     Hyper,
     GnomeTerminal,
@@ -170,3 +172,7 @@ impl ProcessRegistry {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "domain_test.rs"]
+mod domain_test;

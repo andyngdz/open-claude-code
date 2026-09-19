@@ -5,31 +5,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use open_claude_code_backend::open_code_go_public_model_id;
 use uuid::Uuid;
 
 use super::proxy::ClaudeProxyEnv;
 use super::terminal_args::{sh_quote, MODEL_ARGUMENT};
 use crate::features::errors::LauncherError;
-
-/// Builds an export-and-exec shell line for AppleScript `do script` / `write text`.
-pub(super) fn shell_launch_command(
-    workspace: &Path,
-    claude_path: &Path,
-    model_id: &str,
-    proxy_env: &ClaudeProxyEnv,
-) -> String {
-    let public_model = open_code_go_public_model_id(model_id);
-    let mut parts = proxy_exports(proxy_env);
-    parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
-    parts.push(format!(
-        "exec {} {} {}",
-        sh_quote(&claude_path.to_string_lossy()),
-        MODEL_ARGUMENT,
-        sh_quote(&public_model)
-    ));
-    parts.join(" && ")
-}
 
 /// Writes a private, one-time launch script that exports proxy env and runs the CLI.
 pub(super) fn write_launch_script(
@@ -43,7 +23,9 @@ pub(super) fn write_launch_script(
         "rm -f -- \"$0\" || exit 1".to_owned(),
     ];
     parts.extend(proxy_exports(proxy_env));
-    parts.push(format!("cd {}", sh_quote(&workspace.to_string_lossy())));
+    let mut workspace_command = format!("cd {}", sh_quote(&workspace.to_string_lossy()));
+    workspace_command.push_str(" || exit 1");
+    parts.push(workspace_command);
     parts.push(format!(
         "exec {} {} {}",
         sh_quote(&claude_path.to_string_lossy()),
@@ -57,10 +39,14 @@ pub(super) fn write_launch_script(
         .write(true)
         .open(&path)
         .map_err(LauncherError::Spawn)?;
-    script
+    if let Err(source) = script
         .write_all(parts.join("\n").as_bytes())
         .and_then(|()| script.write_all(b"\n"))
-        .map_err(LauncherError::Spawn)?;
+    {
+        drop(script);
+        fs::remove_file(&path).ok();
+        return Err(LauncherError::Spawn(source));
+    }
     Ok(path)
 }
 

@@ -22,6 +22,15 @@ pub(super) struct CommandSpec {
     pub(super) program: PathBuf,
     pub(super) arguments: Vec<String>,
     pub(super) cleanup_path: Option<PathBuf>,
+    pub(super) environment: CommandEnvironment,
+}
+
+/// Selects whether the spawned process receives proxy credentials directly.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum CommandEnvironment {
+    #[cfg(any(test, target_os = "macos"))]
+    Inherit,
+    Proxy,
 }
 
 /// Builds Linux CLI arguments for a concrete terminal binary.
@@ -57,6 +66,7 @@ pub(super) fn command_spec_for_terminal(
         program: terminal_path,
         arguments,
         cleanup_path: None,
+        environment: CommandEnvironment::Proxy,
     }
 }
 

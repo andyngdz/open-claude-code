@@ -5,6 +5,7 @@ use std::{
 
 use super::resolve_macos_command;
 use crate::features::launcher::service::proxy::claude_proxy_env;
+use crate::features::launcher::service::terminal_args::CommandEnvironment;
 use crate::features::launcher::TerminalKind;
 use crate::features::settings::ModelAliasMapping;
 
@@ -14,20 +15,30 @@ fn sample_proxy_env() -> crate::features::launcher::service::proxy::ClaudeProxyE
 }
 
 #[test]
-fn system_default_resolves_to_terminal_osascript() {
-    let command = resolve_macos_command(
-        TerminalKind::SystemDefault,
-        Path::new("/Users/me/src/app"),
-        Path::new("/usr/bin/claude"),
-        "qwen3.8-max",
-        &sample_proxy_env(),
-    )
-    .expect("system default should resolve");
+fn applescript_terminals_use_private_wrappers_without_exposing_credentials() {
+    for terminal in [TerminalKind::SystemDefault, TerminalKind::ITerm2] {
+        let command = resolve_macos_command(
+            terminal,
+            Path::new("/Users/me/src/app"),
+            Path::new("/usr/bin/claude"),
+            "qwen3.8-max",
+            &sample_proxy_env(),
+        )
+        .expect("AppleScript terminal should resolve");
 
-    assert_eq!(command.program.as_os_str(), "/usr/bin/osascript");
-    assert!(command.arguments[1].contains("do script"));
-    assert!(command.arguments[1].contains("Terminal"));
-    assert!(command.arguments[1].contains("cd '/Users/me/src/app'"));
+        assert_eq!(command.program.as_os_str(), "/usr/bin/osascript");
+        assert_eq!(command.environment, CommandEnvironment::Inherit);
+        assert!(!command.arguments[1].contains("token"));
+        let script_path = command
+            .cleanup_path
+            .expect("AppleScript launch should own a private wrapper");
+        assert!(command.arguments[1].contains(&script_path.to_string_lossy().into_owned()));
+        let body = fs::read_to_string(&script_path).expect("wrapper should be readable");
+        fs::remove_file(&script_path).expect("wrapper should be removable");
+
+        assert!(body.contains("cd '/Users/me/src/app' || exit 1"));
+        assert!(body.contains("ANTHROPIC_AUTH_TOKEN='token'"));
+    }
 }
 
 #[test]
@@ -50,11 +61,12 @@ fn direct_wrappers_use_a_workspace_script_without_executing_a_shell_binary() {
         fs::remove_file(&script_path).expect("wrapper should be removable");
 
         assert_eq!(command.program.as_os_str(), "/usr/bin/open");
+        assert_eq!(command.environment, CommandEnvironment::Inherit);
         assert!(command
             .arguments
             .iter()
             .all(|argument| argument != "/bin/sh" && argument != "-c"));
-        assert!(body.contains("cd '/Users/me/src/app'"));
+        assert!(body.contains("cd '/Users/me/src/app' || exit 1"));
     }
 }
 
@@ -77,6 +89,6 @@ fn command_file_terminals_change_to_the_selected_workspace_before_launching() {
         let body = fs::read_to_string(&script_path).expect("wrapper should be readable");
         fs::remove_file(&script_path).expect("wrapper should be removable");
 
-        assert!(body.contains("cd '/Users/me/src/app'"));
+        assert!(body.contains("cd '/Users/me/src/app' || exit 1"));
     }
 }

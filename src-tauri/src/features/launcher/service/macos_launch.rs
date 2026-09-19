@@ -2,10 +2,11 @@ use std::path::{Path, PathBuf};
 
 use open_claude_code_backend::open_code_go_public_model_id;
 
-use super::macos_shell::{applescript_escape, shell_launch_command, write_launch_script};
+use super::macos_shell::{applescript_escape, write_launch_script};
 use super::proxy::ClaudeProxyEnv;
 use super::terminal_args::{
-    CommandSpec, DIRECTORY_ARGUMENT, EXECUTE_ARGUMENT, WORKING_DIRECTORY_ARGUMENT,
+    sh_quote, CommandEnvironment, CommandSpec, DIRECTORY_ARGUMENT, EXECUTE_ARGUMENT,
+    WORKING_DIRECTORY_ARGUMENT,
 };
 use crate::features::{errors::LauncherError, launcher::TerminalKind};
 
@@ -117,7 +118,9 @@ fn osascript_for_app(
     style: OsascriptKind,
 ) -> Result<CommandSpec, LauncherError> {
     let app_name = require_app_name(kind)?;
-    let shell = shell_launch_command(workspace, claude_path, model_id, proxy_env);
+    let public_model = open_code_go_public_model_id(model_id);
+    let wrapper = write_launch_script(workspace, claude_path, &public_model, proxy_env)?;
+    let shell = format!("exec {}", sh_quote(&wrapper.to_string_lossy()));
     let escaped = applescript_escape(&shell);
     let script = match style {
         OsascriptKind::AppleTerminal => {
@@ -130,7 +133,8 @@ fn osascript_for_app(
     Ok(CommandSpec {
         program: PathBuf::from(OSASCRIPT_PROGRAM),
         arguments: vec!["-e".to_owned(), script],
-        cleanup_path: None,
+        cleanup_path: Some(wrapper),
+        environment: CommandEnvironment::Inherit,
     })
 }
 
@@ -170,6 +174,7 @@ fn open_with_wrapper(
         program: PathBuf::from(OPEN_PROGRAM),
         arguments,
         cleanup_path: Some(wrapper),
+        environment: CommandEnvironment::Inherit,
     })
 }
 
@@ -191,6 +196,7 @@ fn open_with_command_file(
             command_file.to_string_lossy().into_owned(),
         ],
         cleanup_path: Some(command_file),
+        environment: CommandEnvironment::Inherit,
     })
 }
 

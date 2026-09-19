@@ -1,11 +1,14 @@
 use std::{fs, path::Path, process::Command, thread, time::Duration};
 
+#[cfg(any(test, target_os = "macos"))]
+use std::{process::Child, time::Instant};
+
 use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
 use super::discovery::is_terminal_launchable;
 use super::proxy::{apply_proxy_env, claude_executable, claude_proxy_env, ClaudeProxyEnv};
-use super::terminal_args::CommandSpec;
+use super::terminal_args::{CommandEnvironment, CommandSpec};
 
 #[cfg(target_os = "macos")]
 use super::macos_launch::resolve_macos_command;
@@ -23,7 +26,12 @@ use crate::features::{
     settings::{is_workspace_directory, ModelAliasMapping},
 };
 
+#[cfg(not(target_os = "macos"))]
 const TERMINAL_START_GRACE: Duration = Duration::from_millis(700);
+#[cfg(target_os = "macos")]
+const MACOS_HELPER_TIMEOUT: Duration = Duration::from_secs(10);
+#[cfg(any(test, target_os = "macos"))]
+const HELPER_STATUS_POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 /// Spawns Claude Code in the configured terminal with proxy-only credentials.
 pub(crate) fn launch_claude(
@@ -49,6 +57,9 @@ pub(crate) fn launch_claude(
         &proxy_env,
     )?;
     let mut child = spawn_terminal(&command_spec, workspace, &proxy_env)?;
+    #[cfg(target_os = "macos")]
+    ensure_helper_succeeded(&mut child, &command_spec, MACOS_HELPER_TIMEOUT)?;
+    #[cfg(not(target_os = "macos"))]
     if should_check_terminal_liveness(launch_terminal) {
         ensure_terminal_stayed_open(&mut child)?;
     }
@@ -78,15 +89,52 @@ fn spawn_terminal(
 ) -> Result<std::process::Child, LauncherError> {
     let mut command = Command::new(&command_spec.program);
     command.args(&command_spec.arguments).current_dir(workspace);
-    apply_proxy_env(&mut command, proxy_env);
+    if command_spec.environment == CommandEnvironment::Proxy {
+        apply_proxy_env(&mut command, proxy_env);
+    }
     match command.spawn() {
         Ok(child) => Ok(child),
         Err(source) => {
-            if let Some(cleanup_path) = &command_spec.cleanup_path {
-                fs::remove_file(cleanup_path).ok();
-            }
+            cleanup_pending_script(command_spec);
             Err(LauncherError::Spawn(source))
         }
+    }
+}
+
+#[cfg(any(test, target_os = "macos"))]
+fn ensure_helper_succeeded(
+    child: &mut Child,
+    command_spec: &CommandSpec,
+    timeout: Duration,
+) -> Result<(), LauncherError> {
+    let deadline = Instant::now() + timeout;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) if status.success() => return Ok(()),
+            Ok(Some(_status)) => {
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::TerminalExited);
+            }
+            Ok(None) if Instant::now() < deadline => {
+                thread::sleep(HELPER_STATUS_POLL_INTERVAL);
+            }
+            Ok(None) => {
+                child.kill().ok();
+                child.wait().ok();
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::TerminalExited);
+            }
+            Err(source) => {
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::Spawn(source));
+            }
+        }
+    }
+}
+
+fn cleanup_pending_script(command_spec: &CommandSpec) {
+    if let Some(cleanup_path) = &command_spec.cleanup_path {
+        fs::remove_file(cleanup_path).ok();
     }
 }
 
@@ -125,6 +173,7 @@ fn resolve_linux_command(
                 program: xdg_terminal_path,
                 arguments: claude_arguments(claude_path, model_id),
                 cleanup_path: None,
+                environment: CommandEnvironment::Proxy,
             });
         }
         let fallback_terminal = concrete_terminals()
@@ -157,13 +206,12 @@ fn resolve_concrete_terminal(
     ))
 }
 
+#[cfg(not(target_os = "macos"))]
 fn should_check_terminal_liveness(terminal: TerminalKind) -> bool {
-    if cfg!(target_os = "macos") {
-        return false;
-    }
     terminal != TerminalKind::SystemDefault
 }
 
+#[cfg(not(target_os = "macos"))]
 fn ensure_terminal_stayed_open(child: &mut std::process::Child) -> Result<(), LauncherError> {
     thread::sleep(TERMINAL_START_GRACE);
     match child.try_wait() {
