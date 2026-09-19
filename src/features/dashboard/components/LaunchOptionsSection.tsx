@@ -1,6 +1,7 @@
-import { Button, Card } from "@heroui/react"
+import { Card } from "@heroui/react"
 import type { FC } from "react"
 
+import { LoadingButton } from "@/common/components/LoadingButton"
 import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { useLaunchOptionsSection } from "@/features/dashboard/hooks/useLaunchOptionsSection"
 import { LaunchCommandField } from "@/features/dashboard/presentations/LaunchCommandField"
@@ -35,7 +36,7 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
       </Card>
       <Card className={WORKBENCH_CARD_CLASS}>
         <Card.Content>
-          <Button
+          <LoadingButton
             className="rounded-md"
             fullWidth
             isDisabled={!canPressLaunch}
@@ -46,8 +47,8 @@ export const LaunchOptionsSection: FC<ILaunchOptionsSectionProps> = ({
               void onPressLaunch()
             }}
           >
-            {isLaunching ? "Opening" : "Launch Claude Code"}
-          </Button>
+            Launch Claude Code
+          </LoadingButton>
         </Card.Content>
       </Card>
     </>

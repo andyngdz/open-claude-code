@@ -1,9 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useRef, useState } from "react"
+import { toast } from "@heroui/react"
+import { useEffect, useRef } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import type { UseFormReturn } from "react-hook-form"
 
-import { TAutosaveStatus } from "@/features/dashboard/constants/dashboardLabels"
+import {
+  AUTOSAVE_FAILED_TOAST,
+  AUTOSAVE_SAVED_TOAST,
+} from "@/features/dashboard/constants/dashboardLabels"
 import {
   launchFormSchema,
   TPendingAction,
@@ -20,7 +24,6 @@ import {
 import type { ValueChanged } from "@/types"
 
 interface IUseLaunchSectionReturn extends UseFormReturn<ILaunchForm> {
-  autosaveStatus: TAutosaveStatus
   isBusy: boolean
   options: IModelOption[]
 }
@@ -39,7 +42,6 @@ export const useLaunchSection = (
   const isBusy = pending !== TPendingAction.None
   const savedSettings = useRef(launchSettingsFingerprint(launchFormDefaults(snapshot)))
   const watchedValues = useWatch({ control: methods.control })
-  const [autosaveStatus, setAutosaveStatus] = useState(TAutosaveStatus.Idle)
 
   useEffect(() => {
     const defaults = launchFormDefaults(snapshot)
@@ -58,18 +60,16 @@ export const useLaunchSection = (
     const fingerprint = launchSettingsFingerprint(persistable)
     if (fingerprint === savedSettings.current) return
 
-    setAutosaveStatus(TAutosaveStatus.Idle)
     let cancelled = false
     const timer = window.setTimeout(() => {
-      setAutosaveStatus(TAutosaveStatus.Saving)
       void onSaveSettings(persistable).then((saved) => {
         if (cancelled) return
         if (saved) {
           savedSettings.current = fingerprint
-          setAutosaveStatus(TAutosaveStatus.Saved)
+          toast.success(AUTOSAVE_SAVED_TOAST)
           return
         }
-        setAutosaveStatus(TAutosaveStatus.Failed)
+        toast.danger(AUTOSAVE_FAILED_TOAST)
       })
     }, AUTO_SAVE_DELAY_MS)
     return () => {
@@ -80,7 +80,6 @@ export const useLaunchSection = (
 
   return {
     ...methods,
-    autosaveStatus,
     isBusy,
     options: modelOptions(snapshot),
   } satisfies IUseLaunchSectionReturn

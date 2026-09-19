@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 
+import { toast } from "@heroui/react"
 import { act, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
+import {
+  AUTOSAVE_FAILED_TOAST,
+  AUTOSAVE_SAVED_TOAST,
+} from "@/features/dashboard/constants/dashboardLabels"
 import { useLaunchSection } from "@/features/dashboard/hooks/useLaunchSection"
-import { TAutosaveStatus } from "@/features/dashboard/constants/dashboardLabels"
 import {
   TConnectionStatus,
   TPendingAction,
@@ -27,6 +31,7 @@ const snapshot = {
 describe("useLaunchSection", () => {
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it("saves changed settings without requiring a manual submit", async () => {
@@ -62,8 +67,10 @@ describe("useLaunchSection", () => {
     expect(saveSettings).not.toHaveBeenCalled()
   })
 
-  it("reports saved only after a persist succeeds", async () => {
+  it("toasts Saved only after a persist succeeds", async () => {
     vi.useFakeTimers()
+    vi.spyOn(toast, "success").mockReturnValue("toast-id" as never)
+    vi.spyOn(toast, "danger").mockReturnValue("toast-id" as never)
     let finishSave: (saved: boolean) => void = () => {}
     const saveSettings = vi.fn(
       () =>
@@ -75,26 +82,27 @@ describe("useLaunchSection", () => {
       return useLaunchSection(snapshot, TPendingAction.None, saveSettings)
     })
 
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Idle)
-
     act(() => {
       result.current.setValue("modelId", "model-b")
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Idle)
+    expect(toast.success).not.toHaveBeenCalled()
 
     act(() => {
       vi.advanceTimersByTime(350)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Saving)
+    expect(toast.success).not.toHaveBeenCalled()
 
     await act(async () => {
       finishSave(true)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Saved)
+    expect(toast.success).toHaveBeenCalledWith(AUTOSAVE_SAVED_TOAST)
+    expect(toast.danger).not.toHaveBeenCalled()
   })
 
-  it("reports save failed when persist returns false", async () => {
+  it("toasts Save failed when persist returns false", async () => {
     vi.useFakeTimers()
+    vi.spyOn(toast, "success").mockReturnValue("toast-id" as never)
+    vi.spyOn(toast, "danger").mockReturnValue("toast-id" as never)
     let finishSave: (saved: boolean) => void = () => {}
     const saveSettings = vi.fn(
       () =>
@@ -116,7 +124,8 @@ describe("useLaunchSection", () => {
     await act(async () => {
       finishSave(false)
     })
-    expect(result.current.autosaveStatus).toBe(TAutosaveStatus.Failed)
+    expect(toast.danger).toHaveBeenCalledWith(AUTOSAVE_FAILED_TOAST)
+    expect(toast.success).not.toHaveBeenCalled()
   })
 
   it("keeps an empty custom model row instead of autosaving it away", async () => {
