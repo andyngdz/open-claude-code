@@ -1,16 +1,24 @@
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-    thread,
-    time::Duration,
-};
+use std::{fs, path::Path, process::Command, thread, time::Duration};
+
+#[cfg(any(test, target_os = "macos"))]
+use std::{process::Child, time::Instant};
 
 use secrecy::{ExposeSecret, SecretString};
 use uuid::Uuid;
 
-use super::discovery::{concrete_terminals, find_executable, XDG_TERMINAL_EXECUTABLE};
-use super::proxy::{apply_proxy_env, claude_executable, claude_proxy_env};
-use open_claude_code_backend::open_code_go_public_model_id;
+use super::discovery::is_terminal_launchable;
+use super::proxy::{apply_proxy_env, claude_executable, claude_proxy_env, ClaudeProxyEnv};
+use super::terminal_args::{CommandEnvironment, CommandSpec};
+
+#[cfg(target_os = "macos")]
+use super::macos_launch::resolve_macos_command;
+
+#[cfg(not(target_os = "macos"))]
+use super::discovery::{
+    concrete_terminals, find_executable, is_installed, XDG_TERMINAL_EXECUTABLE,
+};
+#[cfg(not(target_os = "macos"))]
+use super::terminal_args::{claude_arguments, command_spec_for_terminal};
 
 use crate::features::{
     errors::LauncherError,
@@ -18,11 +26,12 @@ use crate::features::{
     settings::{is_workspace_directory, ModelAliasMapping},
 };
 
-const MODEL_ARGUMENT: &str = crate::constants::MODEL_FLAG;
-const EXECUTE_ARGUMENT: &str = "-e";
-const WORKING_DIRECTORY_ARGUMENT: &str = "--working-directory";
-const GHOSTTY_OWN_WINDOW: &str = "--gtk-single-instance=false";
+#[cfg(not(target_os = "macos"))]
 const TERMINAL_START_GRACE: Duration = Duration::from_millis(700);
+#[cfg(target_os = "macos")]
+const MACOS_HELPER_TIMEOUT: Duration = Duration::from_secs(10);
+#[cfg(any(test, target_os = "macos"))]
+const HELPER_STATUS_POLL_INTERVAL: Duration = Duration::from_millis(20);
 
 /// Spawns Claude Code in the configured terminal with proxy-only credentials.
 pub(crate) fn launch_claude(
@@ -37,17 +46,21 @@ pub(crate) fn launch_claude(
     if !is_workspace_directory(workspace) {
         return Err(LauncherError::InvalidWorkspace);
     }
+    let launch_terminal = effective_terminal(terminal);
     let claude_path = claude_executable()?;
-    let command_spec = resolve_command_spec(terminal, workspace, &claude_path, model_id)?;
-    let mut child = spawn_terminal(
-        &command_spec,
+    let proxy_env = claude_proxy_env(proxy_base_url, proxy_token.expose_secret(), aliases);
+    let command_spec = resolve_command_spec(
+        launch_terminal,
         workspace,
-        proxy_base_url,
-        proxy_token,
-        aliases,
+        &claude_path,
+        model_id,
+        &proxy_env,
     )?;
-    // The system-default helper can exit after delegating to another terminal.
-    if should_check_terminal_liveness(terminal) {
+    let mut child = spawn_terminal(&command_spec, workspace, &proxy_env)?;
+    #[cfg(target_os = "macos")]
+    ensure_helper_succeeded(&mut child, &command_spec, MACOS_HELPER_TIMEOUT)?;
+    #[cfg(not(target_os = "macos"))]
+    if should_check_terminal_liveness(launch_terminal) {
         ensure_terminal_stayed_open(&mut child)?;
     }
     let process_id = child.id();
@@ -55,55 +68,125 @@ pub(crate) fn launch_claude(
 
     Ok(LaunchReceipt {
         process_id,
-        terminal,
+        terminal: launch_terminal,
         workspace: workspace.to_path_buf(),
         model_id: model_id.to_owned(),
     })
 }
 
-#[derive(Debug, Eq, PartialEq)]
-struct CommandSpec {
-    program: PathBuf,
-    arguments: Vec<String>,
+/// Falls back to System default when the saved terminal is no longer installed.
+pub(crate) fn effective_terminal(terminal: TerminalKind) -> TerminalKind {
+    if is_terminal_launchable(terminal) {
+        return terminal;
+    }
+    TerminalKind::SystemDefault
 }
 
 fn spawn_terminal(
     command_spec: &CommandSpec,
     workspace: &Path,
-    proxy_base_url: &str,
-    proxy_token: &SecretString,
-    aliases: &ModelAliasMapping,
+    proxy_env: &ClaudeProxyEnv,
 ) -> Result<std::process::Child, LauncherError> {
-    let proxy_env = claude_proxy_env(proxy_base_url, proxy_token.expose_secret(), aliases);
     let mut command = Command::new(&command_spec.program);
     command.args(&command_spec.arguments).current_dir(workspace);
-    apply_proxy_env(&mut command, &proxy_env);
-    command.spawn().map_err(LauncherError::Spawn)
+    if command_spec.environment == CommandEnvironment::Proxy {
+        apply_proxy_env(&mut command, proxy_env);
+    }
+    match command.spawn() {
+        Ok(child) => Ok(child),
+        Err(source) => {
+            cleanup_pending_script(command_spec);
+            Err(LauncherError::Spawn(source))
+        }
+    }
 }
 
+#[cfg(any(test, target_os = "macos"))]
+fn ensure_helper_succeeded(
+    child: &mut Child,
+    command_spec: &CommandSpec,
+    timeout: Duration,
+) -> Result<(), LauncherError> {
+    let deadline = Instant::now() + timeout;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) if status.success() => return Ok(()),
+            Ok(Some(_status)) => {
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::TerminalExited);
+            }
+            Ok(None) if Instant::now() < deadline => {
+                thread::sleep(HELPER_STATUS_POLL_INTERVAL);
+            }
+            Ok(None) => {
+                child.kill().ok();
+                child.wait().ok();
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::TerminalExited);
+            }
+            Err(source) => {
+                cleanup_pending_script(command_spec);
+                return Err(LauncherError::Spawn(source));
+            }
+        }
+    }
+}
+
+fn cleanup_pending_script(command_spec: &CommandSpec) {
+    if let Some(cleanup_path) = &command_spec.cleanup_path {
+        fs::remove_file(cleanup_path).ok();
+    }
+}
+
+#[cfg(target_os = "macos")]
 fn resolve_command_spec(
     terminal: TerminalKind,
     workspace: &Path,
     claude_path: &Path,
     model_id: &str,
+    proxy_env: &ClaudeProxyEnv,
 ) -> Result<CommandSpec, LauncherError> {
-    if terminal != TerminalKind::SystemDefault {
-        return resolve_concrete_terminal(terminal, workspace, claude_path, model_id);
-    }
-    if let Some(xdg_terminal_path) = find_executable(XDG_TERMINAL_EXECUTABLE) {
-        return Ok(CommandSpec {
-            program: xdg_terminal_path,
-            arguments: claude_arguments(claude_path, model_id),
-        });
-    }
-
-    let fallback_terminal = concrete_terminals()
-        .into_iter()
-        .find(|candidate| candidate.executable().and_then(find_executable).is_some())
-        .ok_or(LauncherError::TerminalNotFound)?;
-    resolve_concrete_terminal(fallback_terminal, workspace, claude_path, model_id)
+    resolve_macos_command(terminal, workspace, claude_path, model_id, proxy_env)
 }
 
+#[cfg(not(target_os = "macos"))]
+fn resolve_command_spec(
+    terminal: TerminalKind,
+    workspace: &Path,
+    claude_path: &Path,
+    model_id: &str,
+    _proxy_env: &ClaudeProxyEnv,
+) -> Result<CommandSpec, LauncherError> {
+    resolve_linux_command(terminal, workspace, claude_path, model_id)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn resolve_linux_command(
+    terminal: TerminalKind,
+    workspace: &Path,
+    claude_path: &Path,
+    model_id: &str,
+) -> Result<CommandSpec, LauncherError> {
+    if terminal == TerminalKind::SystemDefault {
+        if let Some(xdg_terminal_path) = find_executable(XDG_TERMINAL_EXECUTABLE) {
+            return Ok(CommandSpec {
+                program: xdg_terminal_path,
+                arguments: claude_arguments(claude_path, model_id),
+                cleanup_path: None,
+                environment: CommandEnvironment::Proxy,
+            });
+        }
+        let fallback_terminal = concrete_terminals()
+            .iter()
+            .copied()
+            .find(|kind| is_installed(*kind))
+            .ok_or(LauncherError::TerminalNotFound)?;
+        return resolve_concrete_terminal(fallback_terminal, workspace, claude_path, model_id);
+    }
+    resolve_concrete_terminal(terminal, workspace, claude_path, model_id)
+}
+
+#[cfg(not(target_os = "macos"))]
 fn resolve_concrete_terminal(
     terminal: TerminalKind,
     workspace: &Path,
@@ -123,38 +206,12 @@ fn resolve_concrete_terminal(
     ))
 }
 
-fn command_spec_for_terminal(
-    terminal: TerminalKind,
-    terminal_path: PathBuf,
-    workspace: &Path,
-    claude_path: &Path,
-    model_id: &str,
-) -> CommandSpec {
-    let workspace_value = workspace.to_string_lossy();
-    let claude_value = claude_path.to_string_lossy();
-    let public_model = open_code_go_public_model_id(model_id);
-    let arguments = match terminal {
-        TerminalKind::Ghostty => ghostty_arguments(&workspace_value, &claude_value, &public_model),
-        TerminalKind::GnomeTerminal => {
-            gnome_arguments(&workspace_value, &claude_value, &public_model)
-        }
-        TerminalKind::Konsole => konsole_arguments(&workspace_value, &claude_value, &public_model),
-        TerminalKind::Kitty => kitty_arguments(&workspace_value, &claude_value, &public_model),
-        TerminalKind::Alacritty => {
-            alacritty_arguments(&workspace_value, &claude_value, &public_model)
-        }
-        TerminalKind::SystemDefault => claude_arguments(claude_path, model_id),
-    };
-    CommandSpec {
-        program: terminal_path,
-        arguments,
-    }
-}
-
+#[cfg(not(target_os = "macos"))]
 fn should_check_terminal_liveness(terminal: TerminalKind) -> bool {
     terminal != TerminalKind::SystemDefault
 }
 
+#[cfg(not(target_os = "macos"))]
 fn ensure_terminal_stayed_open(child: &mut std::process::Child) -> Result<(), LauncherError> {
     thread::sleep(TERMINAL_START_GRACE);
     match child.try_wait() {
@@ -162,69 +219,6 @@ fn ensure_terminal_stayed_open(child: &mut std::process::Child) -> Result<(), La
         Ok(None) => Ok(()),
         Err(source) => Err(LauncherError::Spawn(source)),
     }
-}
-
-fn ghostty_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
-    vec![
-        GHOSTTY_OWN_WINDOW.to_owned(),
-        format!("{WORKING_DIRECTORY_ARGUMENT}={workspace}"),
-        EXECUTE_ARGUMENT.to_owned(),
-        claude.to_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        model.to_owned(),
-    ]
-}
-
-fn gnome_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
-    vec![
-        "--wait".to_owned(),
-        WORKING_DIRECTORY_ARGUMENT.to_owned(),
-        workspace.to_owned(),
-        "--".to_owned(),
-        claude.to_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        model.to_owned(),
-    ]
-}
-
-fn konsole_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
-    vec![
-        "--workdir".to_owned(),
-        workspace.to_owned(),
-        EXECUTE_ARGUMENT.to_owned(),
-        claude.to_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        model.to_owned(),
-    ]
-}
-
-fn kitty_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
-    vec![
-        "--directory".to_owned(),
-        workspace.to_owned(),
-        claude.to_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        model.to_owned(),
-    ]
-}
-
-fn alacritty_arguments(workspace: &str, claude: &str, model: &str) -> Vec<String> {
-    vec![
-        WORKING_DIRECTORY_ARGUMENT.to_owned(),
-        workspace.to_owned(),
-        EXECUTE_ARGUMENT.to_owned(),
-        claude.to_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        model.to_owned(),
-    ]
-}
-
-fn claude_arguments(claude_path: &Path, model_id: &str) -> Vec<String> {
-    vec![
-        claude_path.to_string_lossy().into_owned(),
-        MODEL_ARGUMENT.to_owned(),
-        open_code_go_public_model_id(model_id),
-    ]
 }
 
 /// Creates a fresh fallback session ID for requests missing Claude's session header.

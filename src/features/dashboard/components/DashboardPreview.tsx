@@ -29,7 +29,6 @@ const previewSnapshot = {
   terminals: [
     { kind: TTerminalKind.SystemDefault, label: "System default", isAvailable: true },
     { kind: TTerminalKind.Ghostty, label: "Ghostty", isAvailable: true },
-    { kind: TTerminalKind.GnomeTerminal, label: "GNOME Terminal", isAvailable: false },
   ],
   lastWorkspace: "/workspace/example-project",
   catalogRefreshedAtEpochSeconds: null,
