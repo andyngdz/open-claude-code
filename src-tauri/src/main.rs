@@ -17,6 +17,11 @@ enum DesktopCommand {
         /// Model id. Skips the terminal prompt.
         #[arg(long)]
         model: Option<String>,
+        /// Arguments passed to Claude Code unchanged, after --.
+        ///
+        /// Example: open-claude-code launch -- -p "how does this repository work?"
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        claude_args: Vec<String>,
     },
 }
 
@@ -55,10 +60,10 @@ fn main() -> Result<(), tauri::Error> {
     fix_path_env::fix().ok();
 
     let cli = DesktopCli::parse();
-    if let Some(DesktopCommand::Launch { model }) = cli.command {
+    if let Some(DesktopCommand::Launch { model, claude_args }) = cli.command {
         #[cfg(windows)]
         console::attach_parent_console();
-        if let Err(error) = open_claude_code_lib::run_launch(model) {
+        if let Err(error) = open_claude_code_lib::run_launch(model, &claude_args) {
             eprintln!("{error}");
             std::process::exit(1);
         }

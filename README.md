@@ -41,6 +41,14 @@ After the app is running, start a session from a terminal:
 open-claude-code launch
 ```
 
+The model you pick at the prompt is remembered for the next terminal launch,
+separately from the dashboard's Default model. Flags after `--` go to Claude Code
+unchanged:
+
+```sh
+open-claude-code launch -- -p "how does this repository work?"
+```
+
 ## Development
 
 Install dependencies and start the desktop app:

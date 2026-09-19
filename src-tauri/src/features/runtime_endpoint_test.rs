@@ -2,8 +2,8 @@
 use std::os::unix::fs::PermissionsExt;
 
 use super::{
-    default_model_index, parse_model_flag, resolve_model_choice, runtime_path_in, RuntimeEndpoint,
-    RuntimeModel,
+    default_model_index, parse_model_flag, remembered_model_index, resolve_model_choice,
+    runtime_path_in, RuntimeEndpoint, RuntimeModel,
 };
 use crate::features::settings::ModelAliasMapping;
 
@@ -103,6 +103,18 @@ fn runtime_file_replaces_a_previous_handshake() {
     assert_eq!(loaded.token, replacement_endpoint.token);
     RuntimeEndpoint::remove(&path).unwrap();
     std::fs::remove_dir_all(&directory).unwrap();
+}
+
+#[test]
+fn remembered_model_index_only_accepts_a_model_still_in_the_catalog() {
+    let models = sample_models();
+
+    assert_eq!(
+        remembered_model_index(&models, Some("qwen3.8-flash")),
+        Some(1)
+    );
+    assert_eq!(remembered_model_index(&models, Some("retired-model")), None);
+    assert_eq!(remembered_model_index(&models, None), None);
 }
 
 fn sample_models() -> Vec<RuntimeModel> {

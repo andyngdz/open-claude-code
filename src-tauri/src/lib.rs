@@ -43,8 +43,10 @@ pub fn run() -> Result<(), tauri::Error> {
 }
 
 /// Runs `launch` in the current terminal without opening the settings window.
-pub fn run_launch(model: Option<String>) -> Result<(), String> {
-    crate::features::terminal_launch::launch(model).map_err(|error| error.to_string())
+///
+/// `claude_args` reach Claude Code unchanged, after its model flag.
+pub fn run_launch(model: Option<String>, claude_args: &[String]) -> Result<(), String> {
+    crate::features::terminal_launch::launch(model, claude_args).map_err(|error| error.to_string())
 }
 
 /// Converts a session startup message into the error Tauri shows while opening.

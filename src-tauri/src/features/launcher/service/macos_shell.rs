@@ -7,7 +7,7 @@ use std::{
 
 use uuid::Uuid;
 
-use super::proxy::ClaudeProxyEnv;
+use super::proxy::{proxy_variables, ClaudeProxyEnv};
 use super::terminal_args::{sh_quote, MODEL_ARGUMENT};
 use crate::features::errors::LauncherError;
 
@@ -56,30 +56,10 @@ pub(super) fn applescript_escape(value: &str) -> String {
 }
 
 fn proxy_exports(proxy_env: &ClaudeProxyEnv) -> Vec<String> {
-    vec![
-        format!(
-            "export ANTHROPIC_BASE_URL={}",
-            sh_quote(&proxy_env.base_url)
-        ),
-        format!("export ANTHROPIC_AUTH_TOKEN={}", sh_quote(&proxy_env.token)),
-        "export CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1".to_owned(),
-        format!(
-            "export ANTHROPIC_DEFAULT_FABLE_MODEL={}",
-            sh_quote(&proxy_env.fable)
-        ),
-        format!(
-            "export ANTHROPIC_DEFAULT_OPUS_MODEL={}",
-            sh_quote(&proxy_env.opus)
-        ),
-        format!(
-            "export ANTHROPIC_DEFAULT_SONNET_MODEL={}",
-            sh_quote(&proxy_env.sonnet)
-        ),
-        format!(
-            "export ANTHROPIC_DEFAULT_HAIKU_MODEL={}",
-            sh_quote(&proxy_env.haiku)
-        ),
-    ]
+    proxy_variables(proxy_env)
+        .into_iter()
+        .map(|variable| format!("export {}={}", variable.name, sh_quote(variable.value)))
+        .collect()
 }
 
 #[cfg(test)]

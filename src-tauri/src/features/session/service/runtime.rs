@@ -47,12 +47,24 @@ pub(super) fn remove_runtime(inner: &AppSessionState) -> Result<(), SessionError
         .map_err(|_| SessionError::Settings)
 }
 
-/// Persists the current non-secret settings.
+/// Persists the current non-secret settings, keeping the model the CLI remembered.
+///
+/// This process loaded its settings once at startup and only the CLI writes
+/// `cli_launch_model_id`, so the value on disk is the newer one.
 pub(super) fn save_settings(inner: &AppSessionState) -> Result<(), SessionError> {
+    let persisted = inner.settings_store.load().ok();
     inner
         .settings_store
-        .save(&inner.settings)
+        .save(&with_cli_launch_model(inner.settings.clone(), persisted))
         .map_err(|_| SessionError::Settings)
+}
+
+/// Carries the CLI-owned field from the persisted document into what the app writes.
+fn with_cli_launch_model(mut settings: AppSettings, persisted: Option<AppSettings>) -> AppSettings {
+    if let Some(persisted) = persisted {
+        settings.cli_launch_model_id = persisted.cli_launch_model_id;
+    }
+    settings
 }
 
 /// Pushes the saved catalog into the local gateway.

@@ -44,14 +44,55 @@ pub(crate) fn claude_executable() -> Result<PathBuf, LauncherError> {
     find_executable(CLAUDE_EXECUTABLE).ok_or(LauncherError::ClaudeNotFound)
 }
 
+/// One proxy setting, named so the process env and the macOS wrapper cannot drift.
+pub(super) struct ProxyVariable<'a> {
+    pub(super) name: &'static str,
+    pub(super) value: &'a str,
+}
+
+/// Lists every proxy variable Claude Code needs, in the order it reads them.
+pub(super) fn proxy_variables(proxy_env: &ClaudeProxyEnv) -> Vec<ProxyVariable<'_>> {
+    vec![
+        ProxyVariable {
+            name: "ANTHROPIC_BASE_URL",
+            value: &proxy_env.base_url,
+        },
+        ProxyVariable {
+            name: "ANTHROPIC_AUTH_TOKEN",
+            value: &proxy_env.token,
+        },
+        ProxyVariable {
+            name: "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY",
+            value: "1",
+        },
+        ProxyVariable {
+            name: "ANTHROPIC_DEFAULT_FABLE_MODEL",
+            value: &proxy_env.fable,
+        },
+        ProxyVariable {
+            name: "ANTHROPIC_DEFAULT_OPUS_MODEL",
+            value: &proxy_env.opus,
+        },
+        ProxyVariable {
+            name: "ANTHROPIC_DEFAULT_SONNET_MODEL",
+            value: &proxy_env.sonnet,
+        },
+        ProxyVariable {
+            name: "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+            value: &proxy_env.haiku,
+        },
+    ]
+}
+
 /// Applies proxy variables to a process that will run Claude Code.
 pub(crate) fn apply_proxy_env(command: &mut Command, proxy_env: &ClaudeProxyEnv) {
-    command
-        .env("ANTHROPIC_BASE_URL", &proxy_env.base_url)
-        .env("ANTHROPIC_AUTH_TOKEN", &proxy_env.token)
-        .env("CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "1")
-        .env("ANTHROPIC_DEFAULT_FABLE_MODEL", &proxy_env.fable)
-        .env("ANTHROPIC_DEFAULT_OPUS_MODEL", &proxy_env.opus)
-        .env("ANTHROPIC_DEFAULT_SONNET_MODEL", &proxy_env.sonnet)
-        .env("ANTHROPIC_DEFAULT_HAIKU_MODEL", &proxy_env.haiku);
+    command.envs(
+        proxy_variables(proxy_env)
+            .into_iter()
+            .map(|variable| (variable.name, variable.value)),
+    );
 }
+
+#[cfg(test)]
+#[path = "proxy_test.rs"]
+mod proxy_test;
