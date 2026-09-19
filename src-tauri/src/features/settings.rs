@@ -129,6 +129,12 @@ impl SettingsStore {
         })
     }
 
+    /// Builds a store around an explicit settings path for tests.
+    #[cfg(test)]
+    pub(crate) fn for_path(path: PathBuf) -> Self {
+        Self { path }
+    }
+
     /// Loads settings or returns defaults when no settings file exists yet.
     pub(crate) fn load(&self) -> Result<AppSettings, SettingsError> {
         if !self.path.exists() {

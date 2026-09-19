@@ -50,7 +50,7 @@ pub(super) struct ProxyVariable<'a> {
     pub(super) value: &'a str,
 }
 
-/// Lists every proxy variable Claude Code needs, in the order it reads them.
+/// Lists every proxy variable Claude Code needs, in the order the launch script exports them.
 pub(super) fn proxy_variables(proxy_env: &ClaudeProxyEnv) -> Vec<ProxyVariable<'_>> {
     vec![
         ProxyVariable {

@@ -1,5 +1,5 @@
-use super::{nonempty_catalog, runtime_models, with_cli_launch_model};
-use crate::features::settings::AppSettings;
+use super::{nonempty_catalog, runtime_models, save_settings_with, with_cli_launch_model};
+use crate::features::settings::{AppSettings, SettingsStore};
 use open_claude_code_backend::ModelCatalogEntry;
 
 #[test]
@@ -47,4 +47,46 @@ fn runtime_models_include_custom_models_once() {
     let custom_model = &models[1];
     assert_eq!(custom_model.id, "custom-model");
     assert_eq!(custom_model.display_name, "custom-model");
+}
+
+/// A hand-written document, the shape the app finds on disk when it starts.
+fn settings_document_on_disk() -> Vec<u8> {
+    serde_json::to_vec_pretty(&serde_json::json!({
+        "version": 1,
+        "terminal": "system_default",
+        "lastWorkspace": null,
+        "aliases": {
+            "fable": "qwen3.8-max",
+            "opus": "qwen3.8-max",
+            "sonnet": "qwen3.8-max",
+            "haiku": "qwen3.8-flash",
+        },
+        "launchModelId": "qwen3.8-max",
+        "cliLaunchModelId": "qwen3.8-flash",
+        "customModels": [],
+        "cachedModels": [],
+        "catalogRefreshedAtEpochSeconds": null,
+    }))
+    .expect("fixture should serialize in a test")
+}
+
+#[test]
+fn an_app_save_keeps_the_cli_model_that_is_on_disk() {
+    let directory =
+        std::env::temp_dir().join(format!("open-claude-code-app-save-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&directory);
+    std::fs::create_dir_all(&directory).expect("test directory should be created");
+    let path = directory.join("settings.json");
+    std::fs::write(&path, settings_document_on_disk()).expect("fixture should be written");
+    let store = SettingsStore::for_path(path.clone());
+
+    // This process loaded its copy before the CLI wrote the field, so its own value is absent.
+    save_settings_with(&store, &AppSettings::default()).expect("a save should succeed");
+
+    let written = std::fs::read_to_string(&path).expect("settings should be readable");
+    assert!(
+        written.contains("\"cliLaunchModelId\": \"qwen3.8-flash\""),
+        "the model the CLI remembered should survive an app save, wrote {written}"
+    );
+    std::fs::remove_dir_all(&directory).expect("test directory should be removable");
 }

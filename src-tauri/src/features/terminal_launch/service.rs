@@ -13,7 +13,7 @@ use crate::features::{
         default_model_index, remembered_model_index, resolve_model_choice, RuntimeEndpoint,
         RuntimeModel,
     },
-    settings::{AppSettings, SettingsStore},
+    settings::SettingsStore,
 };
 
 /// Attaches to the running gateway and replaces this process with Claude Code.
@@ -23,7 +23,8 @@ pub(crate) fn launch(model: Option<String>, claude_args: &[String]) -> Result<()
     let store = SettingsStore::for_application().map_err(|_| CliError::NotRunning)?;
     let endpoint = RuntimeEndpoint::read(&store.runtime_path()).map_err(map_read_error)?;
     // Settings only supply the prompt default, so an unusable file must not stop a launch.
-    let mut settings = store.load().ok();
+    // It then reads the same as having no remembered model at all.
+    let settings = store.load().ok();
     let remember_model = model.is_none();
     let cli_model_id = settings
         .as_ref()
@@ -34,7 +35,7 @@ pub(crate) fn launch(model: Option<String>, claude_args: &[String]) -> Result<()
     let default_index = prompt_default_index(&endpoint, cli_model_id, dashboard_model_id);
     let model_id = select_model(&endpoint, model, default_index)?;
     if remember_model {
-        remember_cli_launch_model(&store, settings.as_mut(), &model_id);
+        remember_cli_launch_model(&store, &model_id);
     }
     exec_claude(&endpoint, &model_id, claude_args)
 }
@@ -86,12 +87,11 @@ fn prompt_default_index(
 }
 
 /// Stores the model picked at the prompt so the next terminal launch defaults to it.
-fn remember_cli_launch_model(
-    store: &SettingsStore,
-    settings: Option<&mut AppSettings>,
-    model_id: &str,
-) {
-    let Some(settings) = settings else {
+///
+/// Reads the document here rather than at launch time: the prompt can sit open
+/// for minutes, and the app rewrites the whole file from its own memory.
+fn remember_cli_launch_model(store: &SettingsStore, model_id: &str) {
+    let Some(mut settings) = store.load().ok() else {
         return;
     };
     if settings.cli_launch_model_id.as_deref() == Some(model_id) {
@@ -99,7 +99,7 @@ fn remember_cli_launch_model(
     }
     settings.cli_launch_model_id = Some(model_id.to_owned());
     // The launch is already under way, so a settings write that fails is not fatal.
-    store.save(settings).ok();
+    store.save(&settings).ok();
 }
 
 fn print_model_prompt(models: &[RuntimeModel], default_index: usize) -> Result<(), CliError> {
