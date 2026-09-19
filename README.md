@@ -30,9 +30,16 @@ curl -fsSL https://andyngdz.github.io/open-claude-code/install.sh | sh
 ```
 
 The script installs DEB or RPM packages when supported. On other x64 Linux
-distributions, it installs an AppImage in `~/.local/bin` and adds Open Claude
-Code, with its icon, to your app launcher. For Windows installers and manual
+distributions, it installs an AppImage in `~/.local/bin`, a command named
+`open-claude-code`, and an app launcher entry. If your shell cannot find that
+command, add `~/.local/bin` to `PATH`. For Windows installers and manual
 downloads, see the [installation guide](https://andyngdz.github.io/open-claude-code/).
+
+After the app is running, start a session from a terminal:
+
+```sh
+open-claude-code launch
+```
 
 ## Development
 
