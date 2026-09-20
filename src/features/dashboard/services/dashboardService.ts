@@ -74,6 +74,12 @@ const settingsInput = (values: ILaunchForm) => {
       opus: values.opus,
       sonnet: values.sonnet,
       haiku: values.haiku,
+      extended: {
+        fable: values.extendedFable,
+        opus: values.extendedOpus,
+        sonnet: values.extendedSonnet,
+        haiku: values.extendedHaiku,
+      },
     },
     customModels: customModelIds(values.customModels),
   }

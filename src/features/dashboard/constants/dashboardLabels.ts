@@ -10,6 +10,13 @@ export enum TDashboardAlertStatus {
   Danger = "danger",
 }
 
+export enum TExtendedField {
+  Fable = "extendedFable",
+  Opus = "extendedOpus",
+  Sonnet = "extendedSonnet",
+  Haiku = "extendedHaiku",
+}
+
 export type TAliasField = Exclude<TModelField, TModelField.Launch>
 
 export const MODEL_FAMILIES: TAliasField[] = [
@@ -18,6 +25,13 @@ export const MODEL_FAMILIES: TAliasField[] = [
   TModelField.Sonnet,
   TModelField.Haiku,
 ]
+
+export const EXTENDED_FIELDS = {
+  [TModelField.Fable]: TExtendedField.Fable,
+  [TModelField.Opus]: TExtendedField.Opus,
+  [TModelField.Sonnet]: TExtendedField.Sonnet,
+  [TModelField.Haiku]: TExtendedField.Haiku,
+} satisfies Record<TAliasField, TExtendedField>
 
 export const LAUNCH_COMMAND = "open-claude-code launch"
 
@@ -35,3 +49,8 @@ export const ALIAS_LABELS = {
 export const AUTOSAVE_SAVED_TOAST = "Saved"
 
 export const AUTOSAVE_FAILED_TOAST = "Save failed"
+
+export const EXTENDED_CONTEXT_LABEL = "1M context"
+
+export const EXTENDED_CONTEXT_HINT =
+  "Only for models that really serve 1M tokens. Past 200K the request fails instead of compacting."

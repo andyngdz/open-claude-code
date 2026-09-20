@@ -49,6 +49,23 @@ unchanged, after the model flag:
 open-claude-code launch -- -p "how does this repository work?"
 ```
 
+Each of the four alias rows in the dashboard has a 1M context box. A model runs
+with a 1M window when a ticked row points at it, whether Claude Code reaches it
+as an alias or as the Default model. The tick only declares the window to Claude
+Code; it does not change what the provider serves, so tick a model you know
+offers 1M. Below 1M the request fails once the conversation passes the real
+limit, instead of compacting.
+
+A model named on the command line takes the same marker, which Claude Code
+strips before the request reaches the local gateway:
+
+```sh
+open-claude-code launch --model 'deepseek-v4.1-flash[1m]'
+```
+
+Claude Code marks such a request with the `context-1m-2025-08-07` beta header,
+and the gateway forwards beta headers unchanged.
+
 ## Development
 
 Install dependencies and start the desktop app:

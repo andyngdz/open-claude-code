@@ -20,7 +20,13 @@ const snapshot = {
   connection: { status: TConnectionStatus.Connected },
   models: [{ id: "model-a", displayName: "Model A", isCustom: false }],
   customModels: [],
-  aliases: { fable: "model-a", opus: "model-a", sonnet: "model-a", haiku: "model-a" },
+  aliases: {
+    fable: "model-a",
+    opus: "model-a",
+    sonnet: "model-a",
+    haiku: "model-a",
+    extended: { fable: false, opus: false, sonnet: false, haiku: false },
+  },
   launchModelId: "model-a",
   terminal: TTerminalKind.SystemDefault,
   terminals: [],
@@ -126,6 +132,41 @@ describe("useLaunchSection", () => {
     })
     expect(toast.danger).toHaveBeenCalledWith(AUTOSAVE_FAILED_TOAST)
     expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("starts from the ticks the snapshot carries", () => {
+    const ticked = {
+      ...snapshot,
+      aliases: {
+        ...snapshot.aliases,
+        extended: { ...snapshot.aliases.extended, opus: true },
+      },
+    } satisfies IDashboardSnapshot
+    const { result } = renderHook(() => {
+      return useLaunchSection(ticked, TPendingAction.None, vi.fn().mockResolvedValue(true))
+    })
+
+    expect(result.current.getValues("extendedOpus")).toBe(true)
+    expect(result.current.getValues("extendedFable")).toBe(false)
+  })
+
+  it("autosaves a ticked alias row", async () => {
+    vi.useFakeTimers()
+    const saveSettings = vi.fn().mockResolvedValue(true)
+    const { result } = renderHook(() => {
+      return useLaunchSection(snapshot, TPendingAction.None, saveSettings)
+    })
+
+    act(() => {
+      result.current.setValue("extendedOpus", true)
+      vi.advanceTimersByTime(350)
+    })
+
+    await vi.waitFor(() => {
+      expect(saveSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ extendedOpus: true }),
+      )
+    })
   })
 
   it("keeps an empty custom model row instead of autosaving it away", async () => {
