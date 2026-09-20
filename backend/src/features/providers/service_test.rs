@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use secrecy::SecretString;
 
 use super::ProviderRegistry;
 use crate::features::providers::{
@@ -20,6 +21,10 @@ impl Provider for FakeProvider {
 
     async fn connection_state(&self) -> ProviderConnectionState {
         ProviderConnectionState::Disconnected
+    }
+
+    async fn load_saved_api_key(&self) -> Result<SecretString, ProviderError> {
+        Err(ProviderError::CredentialNotFound)
     }
 
     async fn save_and_test_api_key(

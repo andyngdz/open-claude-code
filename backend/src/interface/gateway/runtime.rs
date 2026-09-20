@@ -10,16 +10,66 @@ use uuid::Uuid;
 use super::routes::{gateway_router, GatewayHttpState};
 pub(crate) use crate::features::gateway::GatewayConfiguration;
 use crate::{
-    features::providers::{ModelCatalogEntry, ProviderRegistry},
+    features::providers::{ModelCatalogEntry, ProviderId, ProviderRegistry},
     interface::GatewayError,
 };
 
-/// Owns the bound gateway address, local credential, and server task.
+/// Owns the models and fallback session every gateway request reads.
+///
+/// Both the runtime that serves requests and the routes that replace the
+/// published models share this handle, so a control request and a proxy request
+/// never disagree about which catalog is live.
+#[derive(Clone)]
+pub(crate) struct GatewayPublisher {
+    configuration: Arc<RwLock<GatewayConfiguration>>,
+    session_id: Arc<RwLock<String>>,
+}
+
+impl GatewayPublisher {
+    /// Builds a publisher over the configuration the gateway starts with.
+    pub(crate) fn new(configuration: GatewayConfiguration, session_id: String) -> Self {
+        Self {
+            configuration: Arc::new(RwLock::new(configuration)),
+            session_id: Arc::new(RwLock::new(session_id)),
+        }
+    }
+
+    /// Replaces published models and the fallback session for later requests.
+    pub(crate) async fn configure(
+        &self,
+        catalog: Vec<ModelCatalogEntry>,
+        custom_models: Vec<String>,
+        session_id: String,
+    ) {
+        let mut configuration = self.configuration.write().await;
+        configuration.catalog = catalog;
+        configuration.custom_models = custom_models;
+        drop(configuration);
+        *self.session_id.write().await = session_id;
+    }
+
+    /// Returns the published configuration for a discovery or control response.
+    pub(crate) async fn configuration(&self) -> GatewayConfiguration {
+        self.configuration.read().await.clone()
+    }
+
+    /// Returns the provider the published configuration points at.
+    pub(crate) async fn provider_id(&self) -> ProviderId {
+        self.configuration.read().await.provider_id.clone()
+    }
+
+    /// Returns the fallback session id used when a request carries none.
+    pub(crate) async fn session_id(&self) -> String {
+        self.session_id.read().await.clone()
+    }
+}
+
+/// Owns the bound gateway address, local credentials, and server task.
 pub struct GatewayRuntime {
     base_url: String,
     local_token: SecretString,
-    configuration: Arc<RwLock<GatewayConfiguration>>,
-    session_id: Arc<RwLock<String>>,
+    control_token: SecretString,
+    publisher: GatewayPublisher,
     shutdown_sender: std::sync::Mutex<Option<oneshot::Sender<()>>>,
     server_task: Mutex<Option<JoinHandle<Result<(), std::io::Error>>>>,
 }
@@ -35,6 +85,11 @@ impl GatewayRuntime {
         &self.local_token
     }
 
+    /// Returns the in-memory token passed only to the owning desktop process.
+    pub fn control_token(&self) -> &SecretString {
+        &self.control_token
+    }
+
     /// Replaces published models and the fallback session for later requests.
     pub(crate) async fn configure(
         &self,
@@ -42,11 +97,9 @@ impl GatewayRuntime {
         custom_models: Vec<String>,
         session_id: String,
     ) {
-        let mut configuration = self.configuration.write().await;
-        configuration.catalog = catalog;
-        configuration.custom_models = custom_models;
-        drop(configuration);
-        *self.session_id.write().await = session_id;
+        self.publisher
+            .configure(catalog, custom_models, session_id)
+            .await;
     }
 
     /// Gracefully stops the Axum server and joins its owned task.
@@ -75,17 +128,15 @@ impl GatewayRuntime {
 /// Binds the gateway to an ephemeral loopback port and starts serving routes.
 pub(crate) async fn start_gateway(
     registry: ProviderRegistry,
-    configuration: Arc<RwLock<GatewayConfiguration>>,
-    session_id: Arc<RwLock<String>>,
+    publisher: GatewayPublisher,
 ) -> Result<GatewayRuntime, GatewayError> {
     let local_token = SecretString::from(Uuid::new_v4().to_string());
-    let state_configuration = Arc::clone(&configuration);
-    let state_session_id = Arc::clone(&session_id);
+    let control_token = SecretString::from(Uuid::new_v4().to_string());
     let state = GatewayHttpState {
         registry,
-        configuration,
-        session_id,
+        publisher: publisher.clone(),
         local_token: local_token.clone(),
+        control_token: control_token.clone(),
     };
     let listener = tokio::net::TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
         .await
@@ -103,8 +154,8 @@ pub(crate) async fn start_gateway(
     Ok(GatewayRuntime {
         base_url: format!("http://{local_address}"),
         local_token,
-        configuration: state_configuration,
-        session_id: state_session_id,
+        control_token,
+        publisher,
         shutdown_sender: std::sync::Mutex::new(Some(shutdown_sender)),
         server_task: Mutex::new(Some(server_task)),
     })

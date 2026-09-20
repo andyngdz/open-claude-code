@@ -1,4 +1,3 @@
-import { clsx } from "clsx"
 import { useMemo } from "react"
 import type { FC, ReactNode } from "react"
 
@@ -7,6 +6,7 @@ import {
   TProviderId,
   providerUnavailableCopy,
 } from "@/features/dashboard/constants/dashboardProviders"
+import { WORKBENCH_PANEL_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import { ProviderUnavailable } from "@/features/dashboard/presentations/ProviderUnavailable"
 
 interface IProviderPanelProps {
@@ -24,14 +24,5 @@ export const ProviderPanel: FC<IProviderPanelProps> = ({
     return <ProviderUnavailable label={label} message={providerUnavailableCopy(label)} />
   }, [children, provider])
 
-  return (
-    <main
-      className={clsx(
-        "mx-auto flex w-full max-w-7xl flex-col gap-6",
-        "p-4 md:p-8",
-      )}
-    >
-      {providerBody}
-    </main>
-  )
+  return <main className={WORKBENCH_PANEL_CLASS}>{providerBody}</main>
 }

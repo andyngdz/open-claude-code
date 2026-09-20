@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use secrecy::SecretString;
 
 use super::{
     ModelCatalogEntry, ProviderConnectionState, ProviderDescriptor, ProviderError, ProviderRequest,
@@ -13,6 +14,12 @@ pub trait Provider: Send + Sync {
 
     /// Returns the provider connection state without exposing credentials.
     async fn connection_state(&self) -> ProviderConnectionState;
+
+    /// Loads the stored credential for the local settings surface.
+    ///
+    /// Reports `CredentialNotFound` when no credential is saved, so a caller
+    /// distinguishes "nothing stored" from "the credential store failed".
+    async fn load_saved_api_key(&self) -> Result<SecretString, ProviderError>;
 
     /// Validates and stores an API key, then returns the supported catalog.
     async fn save_and_test_api_key(

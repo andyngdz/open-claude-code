@@ -1,8 +1,8 @@
 use thiserror::Error;
 
-use open_claude_code_backend::OpenCodeGoBackendError;
+use open_claude_code_backend::ControlError;
 
-use crate::features::errors::LauncherError;
+use crate::features::{errors::LauncherError, gateway::GatewayChildError};
 
 /// Reports a failure the dashboard can show to the user.
 #[derive(Debug, Error)]
@@ -42,12 +42,15 @@ pub(crate) enum SessionError {
     NotConnected,
 }
 
-impl From<OpenCodeGoBackendError> for SessionError {
-    fn from(source: OpenCodeGoBackendError) -> Self {
-        match source {
-            OpenCodeGoBackendError::Provider(message)
-            | OpenCodeGoBackendError::Gateway(message) => Self::Operation(message),
-        }
+impl From<ControlError> for SessionError {
+    fn from(source: ControlError) -> Self {
+        Self::Operation(source.to_string())
+    }
+}
+
+impl From<GatewayChildError> for SessionError {
+    fn from(source: GatewayChildError) -> Self {
+        Self::Operation(source.to_string())
     }
 }
 

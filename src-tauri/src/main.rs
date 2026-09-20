@@ -23,6 +23,9 @@ enum DesktopCommand {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         claude_args: Vec<String>,
     },
+    /// Serve the local gateway. Spawned by the app, never run by hand.
+    #[command(hide = true)]
+    Gateway,
 }
 
 #[cfg(windows)]
@@ -55,11 +58,20 @@ mod console {
 }
 
 fn main() -> Result<(), tauri::Error> {
+    let cli = DesktopCli::parse();
+    // The gateway child keeps the environment it inherited: the app's stdio and
+    // its own PATH are what it was spawned with, and it opens no terminal.
+    if matches!(cli.command, Some(DesktopCommand::Gateway)) {
+        if let Err(error) = open_claude_code_lib::run_gateway(|line| println!("{line}")) {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
     // Dock/Finder launches get launchd's minimal PATH. Rebuild PATH from the
     // login shell so Claude Code and terminal binaries remain resolvable.
     fix_path_env::fix().ok();
 
-    let cli = DesktopCli::parse();
     if let Some(DesktopCommand::Launch { model, claude_args }) = cli.command {
         #[cfg(windows)]
         console::attach_parent_console();

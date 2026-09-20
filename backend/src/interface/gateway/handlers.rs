@@ -4,10 +4,8 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::Response,
 };
-use secrecy::ExposeSecret;
 
 use super::{response::ResponsePresenter, routes::GatewayHttpState};
-use crate::constants::{API_KEY_HEADER, AUTHORIZATION_HEADER};
 use crate::features::{
     gateway::{discovery_models, resolve_provider_request},
     providers::{ProviderHeader, ProviderRequest},
@@ -27,10 +25,10 @@ pub(super) async fn list_models(
     State(state): State<GatewayHttpState>,
     headers: HeaderMap,
 ) -> Response {
-    if !is_authorized(&headers, &state) {
+    if !state.is_gateway_request(&headers) {
         return ResponsePresenter::authentication_error(LOCAL_TOKEN_ERROR);
     }
-    let configuration = state.configuration.read().await;
+    let configuration = state.publisher.configuration().await;
     ResponsePresenter::models(discovery_models(&configuration))
 }
 
@@ -40,14 +38,14 @@ pub(super) async fn messages(
     headers: HeaderMap,
     body: Body,
 ) -> Response {
-    if !is_authorized(&headers, &state) {
+    if !state.is_gateway_request(&headers) {
         return ResponsePresenter::authentication_error(LOCAL_TOKEN_ERROR);
     }
     let body = match to_bytes(body, MAX_REQUEST_BYTES).await {
         Ok(bytes) => bytes,
         Err(_source) => return ResponsePresenter::bad_request("Request body could not be read"),
     };
-    let configuration = state.configuration.read().await;
+    let configuration = state.publisher.configuration().await;
     let resolved = match resolve_provider_request(&configuration, &body) {
         Ok(request) => request,
         Err(source) => return ResponsePresenter::bad_request(&source.to_string()),
@@ -68,25 +66,6 @@ pub(super) async fn messages(
     }
 }
 
-fn is_authorized(headers: &HeaderMap, state: &GatewayHttpState) -> bool {
-    let expected = state.local_token.expose_secret();
-    credential_matches(headers, AUTHORIZATION_HEADER, Some("Bearer "), expected)
-        || credential_matches(headers, API_KEY_HEADER, None, expected)
-}
-
-fn credential_matches(
-    headers: &HeaderMap,
-    name: &str,
-    prefix: Option<&str>,
-    expected: &str,
-) -> bool {
-    let raw_value = headers.get(name).and_then(|value| value.to_str().ok());
-    let credential = prefix
-        .and_then(|prefix| raw_value?.strip_prefix(prefix))
-        .or(raw_value);
-    credential.is_some_and(|value| value == expected)
-}
-
 struct GatewayRequestAdapter;
 
 impl GatewayRequestAdapter {
@@ -96,7 +75,7 @@ impl GatewayRequestAdapter {
             .and_then(|value| value.to_str().ok());
         match provided {
             Some(session_id) => session_id.to_owned(),
-            None => state.session_id.read().await.clone(),
+            None => state.publisher.session_id().await,
         }
     }
 
