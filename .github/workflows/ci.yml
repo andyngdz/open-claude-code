@@ -54,6 +54,9 @@ jobs:
       - name: Test installer app start
         run: sh scripts/install_start_app_test.sh
 
+      - name: Test installer teardown
+        run: sh scripts/install_teardown_test.sh
+
       - name: Test frontend
         run: pnpm test
 
