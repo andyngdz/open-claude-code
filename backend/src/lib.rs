@@ -9,7 +9,10 @@ mod runtime;
 
 pub use errors::OpenCodeGoBackendError;
 pub use features::providers::{ModelCatalogEntry, ProviderConnectionState};
-pub use runtime::{open_code_go_public_model_id, OpenCodeGoBackend};
+pub use runtime::{
+    open_code_go_public_model_id, split_one_million_suffix, with_one_million_suffix, ContextWindow,
+    OpenCodeGoBackend,
+};
 
 /// Provider model used for Claude Code's primary model aliases by default.
 pub const DEFAULT_PRIMARY_MODEL_ID: &str = "qwen3.8-max";
