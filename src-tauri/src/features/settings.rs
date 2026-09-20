@@ -46,6 +46,9 @@ pub(crate) struct AppSettings {
     pub(crate) aliases: ModelAliasMapping,
     #[serde(default)]
     pub(crate) launch_model_id: Option<String>,
+    /// Model picked at the terminal prompt. Only the CLI writes it.
+    #[serde(default)]
+    pub(crate) cli_launch_model_id: Option<String>,
     pub(crate) custom_models: Vec<String>,
     pub(crate) cached_models: Vec<ModelCatalogEntry>,
     pub(crate) catalog_refreshed_at_epoch_seconds: Option<u64>,
@@ -59,6 +62,7 @@ impl Default for AppSettings {
             last_workspace: None,
             aliases: ModelAliasMapping::default(),
             launch_model_id: None,
+            cli_launch_model_id: None,
             custom_models: Vec::new(),
             cached_models: Vec::new(),
             catalog_refreshed_at_epoch_seconds: None,
@@ -123,6 +127,12 @@ impl SettingsStore {
         Ok(Self {
             path: project_directories.config_dir().join("settings.json"),
         })
+    }
+
+    /// Builds a store around an explicit settings path for tests.
+    #[cfg(test)]
+    pub(crate) fn for_path(path: PathBuf) -> Self {
+        Self { path }
     }
 
     /// Loads settings or returns defaults when no settings file exists yet.

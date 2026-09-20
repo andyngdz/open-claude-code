@@ -112,6 +112,17 @@ pub(crate) fn default_model_index(models: &[RuntimeModel], sonnet: &str) -> usiz
         .unwrap_or(0)
 }
 
+/// Picks the model launched last time, when the catalog still offers it.
+pub(crate) fn remembered_model_index(
+    models: &[RuntimeModel],
+    remembered_model_id: Option<&str>,
+) -> Option<usize> {
+    let remembered_model_id = remembered_model_id?;
+    models
+        .iter()
+        .position(|model| model.id == remembered_model_id)
+}
+
 #[cfg(test)]
 const MISSING_MODEL_FLAG: &str = "Pass a model id after --model.";
 

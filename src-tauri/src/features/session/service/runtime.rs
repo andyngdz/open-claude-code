@@ -5,12 +5,13 @@ use secrecy::ExposeSecret;
 
 use super::super::{DashboardSnapshot, SessionError};
 use crate::features::{
+    errors::SettingsError,
     launcher::{
         list_available_terminals, new_launch_session_id, LaunchClaudeInput, TerminalKind,
         TerminalOption,
     },
     runtime_endpoint::{RuntimeEndpoint, RuntimeModel},
-    settings::{current_epoch_seconds, AppSettings, ModelAliasMapping},
+    settings::{current_epoch_seconds, AppSettings, ModelAliasMapping, SettingsStore},
 };
 
 use super::AppSessionState;
@@ -47,12 +48,28 @@ pub(super) fn remove_runtime(inner: &AppSessionState) -> Result<(), SessionError
         .map_err(|_| SessionError::Settings)
 }
 
-/// Persists the current non-secret settings.
+/// Persists the current non-secret settings, keeping the model the CLI remembered.
+///
+/// This process loaded its settings once at startup and only the CLI writes
+/// `cli_launch_model_id`, so the value on disk is the newer one. The in-memory
+/// copy of that field is not authoritative, and is only written when the
+/// document on disk cannot be read at all.
 pub(super) fn save_settings(inner: &AppSessionState) -> Result<(), SessionError> {
-    inner
-        .settings_store
-        .save(&inner.settings)
-        .map_err(|_| SessionError::Settings)
+    save_settings_with(&inner.settings_store, &inner.settings).map_err(|_| SessionError::Settings)
+}
+
+/// Writes one settings document, carrying the CLI-owned field over from disk.
+fn save_settings_with(store: &SettingsStore, settings: &AppSettings) -> Result<(), SettingsError> {
+    let persisted = store.load().ok();
+    store.save(&with_cli_launch_model(settings.clone(), persisted))
+}
+
+/// Carries the CLI-owned field from the persisted document into what the app writes.
+fn with_cli_launch_model(mut settings: AppSettings, persisted: Option<AppSettings>) -> AppSettings {
+    if let Some(persisted) = persisted {
+        settings.cli_launch_model_id = persisted.cli_launch_model_id;
+    }
+    settings
 }
 
 /// Pushes the saved catalog into the local gateway.
