@@ -82,6 +82,7 @@ export const dashboardSnapshotSchema = z.object({
     extended: extendedContextSchema,
   }),
   launchModelId: z.string(),
+  launchExtendedContext: z.boolean(),
   terminal: terminalKindSchema,
   terminals: z.array(terminalOptionSchema),
   lastWorkspace: z.string().nullable(),
@@ -103,6 +104,7 @@ export const launchFormSchema = z.object({
   extendedOpus: z.boolean(),
   extendedSonnet: z.boolean(),
   extendedHaiku: z.boolean(),
+  extendedModelId: z.boolean(),
   customModels: z.array(customModelFieldSchema),
 })
 

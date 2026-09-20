@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use open_claude_code_backend::{ModelCatalogEntry, ProviderConnectionState};
+use open_claude_code_backend::{ContextWindow, ModelCatalogEntry, ProviderConnectionState};
 use serde::Serialize;
 
 use crate::features::{
@@ -22,6 +22,8 @@ pub(crate) struct DashboardSnapshot {
     pub(crate) aliases: ModelAliasMapping,
     /// Model selected for the next launch.
     pub(crate) launch_model_id: String,
+    /// The 1M tick on the Default model row.
+    pub(crate) launch_extended_context: ContextWindow,
     /// Terminal used for the next launch.
     pub(crate) terminal: TerminalKind,
     /// Terminals this machine can open.

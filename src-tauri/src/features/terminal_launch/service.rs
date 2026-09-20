@@ -10,6 +10,7 @@ use open_claude_code_backend::{
 use super::CliError;
 use crate::features::{
     errors::RuntimeEndpointError,
+    launch_window,
     launcher::{apply_appimage_host_env, apply_proxy_env, claude_executable, claude_proxy_env},
     runtime_endpoint::{
         default_model_index, remembered_model_index, resolve_model_choice, RuntimeEndpoint,
@@ -58,14 +59,19 @@ fn requested_model(model: Option<String>) -> (Option<String>, ContextWindow) {
 
 /// Returns the window Claude Code is told for the model this launch picked.
 ///
-/// A marker the caller typed wins over the alias rows, so `--model 'x[1m]'` is
+/// A marker the caller typed wins over the launch rows, so `--model 'x[1m]'` is
 /// never quietly downgraded.
 fn launch_context_window(
     endpoint: &RuntimeEndpoint,
     model_id: &str,
     requested: ContextWindow,
 ) -> ContextWindow {
-    requested.widest(endpoint.aliases.declared_window(model_id))
+    requested.widest(launch_window::declared_window(
+        &endpoint.aliases,
+        endpoint.launch_model_id.as_deref(),
+        endpoint.launch_extended_context,
+        model_id,
+    ))
 }
 
 fn map_read_error(error: RuntimeEndpointError) -> CliError {

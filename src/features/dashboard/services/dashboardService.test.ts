@@ -24,6 +24,7 @@ const savedSnapshot = {
     extended: { fable: false, opus: true, sonnet: false, haiku: false },
   },
   launchModelId: "model-a",
+  launchExtendedContext: false,
   terminal: TTerminalKind.SystemDefault,
   terminals: [],
   lastWorkspace: null,
@@ -41,21 +42,24 @@ const launchForm = {
   extendedOpus: true,
   extendedSonnet: false,
   extendedHaiku: false,
+  extendedModelId: true,
   customModels: [{ modelId: "custom-beta" }],
 } satisfies ILaunchForm
 
 describe("dashboardService", () => {
-  it("sends the alias ticks with the settings it saves", async () => {
+  it("sends every tick with the settings it saves", async () => {
     vi.mocked(invoke).mockResolvedValue(savedSnapshot)
 
     await dashboardService.saveSettings(launchForm)
 
     // The backend reads a missing `extended` as all unticked, so a payload that
-    // drops it would wipe the user's ticks without an error.
+    // drops it would wipe the user's ticks without an error. The Default model
+    // tick has no fallback and fails the save instead.
     expect(invoke).toHaveBeenCalledWith("save_dashboard_settings", {
       input: {
         terminal: TTerminalKind.Ghostty,
         modelId: "model-a",
+        launchExtendedContext: true,
         aliases: {
           fable: "model-a",
           opus: "model-a",

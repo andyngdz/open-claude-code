@@ -11,6 +11,7 @@ export enum TDashboardAlertStatus {
 }
 
 export enum TExtendedField {
+  ModelId = "extendedModelId",
   Fable = "extendedFable",
   Opus = "extendedOpus",
   Sonnet = "extendedSonnet",
@@ -34,6 +35,8 @@ export const EXTENDED_FIELDS = {
 } satisfies Record<TAliasField, TExtendedField>
 
 export const LAUNCH_COMMAND = "open-claude-code launch"
+
+export const DEFAULT_MODEL_LABEL = "Default model"
 
 export const MODEL_SEARCH_PLACEHOLDER = "Search models"
 

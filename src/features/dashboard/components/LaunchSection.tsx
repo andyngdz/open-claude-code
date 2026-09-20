@@ -11,9 +11,11 @@ import { TerminalSelect } from "@/features/dashboard/components/TerminalSelect"
 import { WORKBENCH_CARD_CLASS } from "@/features/dashboard/constants/dashboardLayout"
 import {
   ALIAS_LABELS,
+  DEFAULT_MODEL_LABEL,
   EXTENDED_CONTEXT_HINT,
   EXTENDED_FIELDS,
   MODEL_FAMILIES,
+  TExtendedField,
   TModelField,
 } from "@/features/dashboard/constants/dashboardLabels"
 import { useLaunchSection } from "@/features/dashboard/hooks/useLaunchSection"
@@ -54,14 +56,24 @@ export const LaunchSection: FC<ILaunchSectionProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <TerminalSelect terminals={snapshot.terminals} />
-                  <ModelSelect label="Default model" name={TModelField.Launch} options={options} />
+                  <div className="flex flex-col gap-2">
+                    <ModelSelect
+                      label={DEFAULT_MODEL_LABEL}
+                      name={TModelField.Launch}
+                      options={options}
+                    />
+                    <OneMillionCheckbox
+                      rowLabel={DEFAULT_MODEL_LABEL}
+                      name={TExtendedField.ModelId}
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {map(MODEL_FAMILIES, (family) => (
                     <div className="flex flex-col gap-2" key={family}>
                       <ModelSelect label={ALIAS_LABELS[family]} name={family} options={options} />
                       <OneMillionCheckbox
-                        aliasLabel={ALIAS_LABELS[family]}
+                        rowLabel={ALIAS_LABELS[family]}
                         name={EXTENDED_FIELDS[family]}
                       />
                     </div>

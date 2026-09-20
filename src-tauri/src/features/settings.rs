@@ -84,6 +84,12 @@ pub(crate) struct AppSettings {
     pub(crate) aliases: ModelAliasMapping,
     #[serde(default)]
     pub(crate) launch_model_id: Option<String>,
+    /// Declares the 1M window for the model `launch_model_id` names.
+    ///
+    /// The Default model is not an alias, so its row keeps its own declaration
+    /// beside the model it points at.
+    #[serde(default)]
+    pub(crate) launch_extended_context: ContextWindow,
     /// Model picked at the terminal prompt. Only the CLI writes it.
     #[serde(default)]
     pub(crate) cli_launch_model_id: Option<String>,
@@ -100,6 +106,7 @@ impl Default for AppSettings {
             last_workspace: None,
             aliases: ModelAliasMapping::default(),
             launch_model_id: None,
+            launch_extended_context: ContextWindow::default(),
             cli_launch_model_id: None,
             custom_models: Vec::new(),
             cached_models: Vec::new(),
@@ -115,6 +122,7 @@ pub(crate) struct SaveProviderSettingsInput {
     pub(crate) terminal: TerminalKind,
     pub(crate) model_id: String,
     pub(crate) aliases: ModelAliasMapping,
+    pub(crate) launch_extended_context: ContextWindow,
     pub(crate) custom_models: Vec<String>,
 }
 

@@ -23,6 +23,7 @@ const connectedSnapshot = {
     extended: { fable: false, opus: false, sonnet: false, haiku: false },
   },
   launchModelId: "model",
+  launchExtendedContext: false,
   terminal: TTerminalKind.SystemDefault,
   terminals: [],
   lastWorkspace: null,

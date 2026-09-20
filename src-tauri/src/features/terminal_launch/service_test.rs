@@ -102,6 +102,8 @@ fn sample_endpoint() -> RuntimeEndpoint {
             haiku: "qwen3.8-flash".to_owned(),
             ..ModelAliasMapping::default()
         },
+        launch_model_id: Some("qwen3.8-max".to_owned()),
+        launch_extended_context: ContextWindow::Standard,
     }
 }
 
@@ -139,6 +141,33 @@ fn a_marker_typed_on_the_command_line_wins_over_the_alias_rows() {
         launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::OneMillion),
         ContextWindow::OneMillion
     );
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
+}
+
+#[test]
+fn a_ticked_default_row_marks_the_model_it_points_at() {
+    let mut endpoint = sample_endpoint();
+    endpoint.launch_extended_context = ContextWindow::OneMillion;
+
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::OneMillion
+    );
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-flash", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
+}
+
+#[test]
+fn a_default_row_the_handshake_never_carried_marks_nothing() {
+    let mut endpoint = sample_endpoint();
+    endpoint.launch_model_id = None;
+    endpoint.launch_extended_context = ContextWindow::OneMillion;
+
     assert_eq!(
         launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
         ContextWindow::Standard

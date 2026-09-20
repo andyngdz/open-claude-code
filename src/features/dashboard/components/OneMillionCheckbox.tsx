@@ -8,17 +8,17 @@ import {
 } from "@/features/dashboard/constants/dashboardLabels"
 
 interface IOneMillionCheckboxProps {
-  /// Names the row in the accessible label, so four ticks on screen read apart.
-  aliasLabel: string
+  /// Names the row in the accessible label, so five ticks on screen read apart.
+  rowLabel: string
   name: TExtendedField
 }
 
-export const OneMillionCheckbox: FC<IOneMillionCheckboxProps> = ({ aliasLabel, name }) => {
+export const OneMillionCheckbox: FC<IOneMillionCheckboxProps> = ({ rowLabel, name }) => {
   const { field } = useController({ name })
 
   return (
     <Checkbox
-      aria-label={`${aliasLabel} ${EXTENDED_CONTEXT_LABEL}`}
+      aria-label={`${rowLabel} ${EXTENDED_CONTEXT_LABEL}`}
       isSelected={field.value}
       name={field.name}
       onBlur={field.onBlur}

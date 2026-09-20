@@ -69,6 +69,7 @@ const settingsInput = (values: ILaunchForm) => {
   return {
     terminal: values.terminal,
     modelId: values.modelId,
+    launchExtendedContext: values.extendedModelId,
     aliases: {
       fable: values.fable,
       opus: values.opus,

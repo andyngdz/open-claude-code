@@ -5,6 +5,7 @@ use tokio::sync::Mutex;
 use super::{DashboardSnapshot, SessionError};
 use crate::features::{
     errors::SettingsError,
+    launch_window,
     launcher::{launch_claude, new_launch_session_id, LaunchClaudeInput, ProcessRegistry},
     settings::{
         normalize_custom_models, AppSettings, InstanceGuard, SaveProviderSettingsInput,
@@ -132,6 +133,7 @@ impl AppSession {
         runtime::ensure_known_model(&inner.settings, &custom_models, &input.model_id)?;
         inner.settings.terminal = input.terminal;
         inner.settings.launch_model_id = Some(input.model_id);
+        inner.settings.launch_extended_context = input.launch_extended_context;
         inner.settings.aliases = input.aliases;
         inner.settings.custom_models = custom_models;
         runtime::save_settings(&inner)?;
@@ -149,9 +151,15 @@ impl AppSession {
         runtime::ensure_can_launch(&inner, &input).await?;
         // Only the id handed to Claude Code carries the marker: the catalog
         // lookup above ran on the bare id, and the saved settings keep it bare.
+        let default_row_model_id = runtime::launch_model_id(&inner.settings);
         let model_id = with_one_million_suffix(
             &input.model_id,
-            inner.settings.aliases.declared_window(&input.model_id),
+            launch_window::declared_window(
+                &inner.settings.aliases,
+                Some(default_row_model_id.as_str()),
+                inner.settings.launch_extended_context,
+                &input.model_id,
+            ),
         );
         let session_id = new_launch_session_id();
         inner

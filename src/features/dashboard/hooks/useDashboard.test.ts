@@ -40,6 +40,7 @@ const snapshot = {
     extended: { fable: false, opus: false, sonnet: false, haiku: false },
   },
   launchModelId: "model-a",
+  launchExtendedContext: false,
   terminal: TTerminalKind.SystemDefault,
   terminals: [],
   lastWorkspace: null,

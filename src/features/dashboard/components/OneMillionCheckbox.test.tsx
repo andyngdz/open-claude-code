@@ -18,14 +18,14 @@ const OneMillionCheckboxHarness: FC = () => {
 
   return (
     <FormProvider {...methods}>
-      <OneMillionCheckbox aliasLabel="Opus" name={TExtendedField.Opus} />
+      <OneMillionCheckbox rowLabel="Opus" name={TExtendedField.Opus} />
       <p>{`tick:${String(value)}`}</p>
     </FormProvider>
   )
 }
 
 describe("OneMillionCheckbox", () => {
-  it("names its row so four ticks on screen read apart", () => {
+  it("names its row so five ticks on screen read apart", () => {
     render(<OneMillionCheckboxHarness />)
 
     expect(screen.getByRole("checkbox", { name: "Opus 1M context" })).toBeTruthy()

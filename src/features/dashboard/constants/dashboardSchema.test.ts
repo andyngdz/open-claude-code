@@ -16,6 +16,7 @@ const snapshotPayload = {
     extended: { fable: true, opus: false, sonnet: false, haiku: false },
   },
   launchModelId: "qwen3.8-max",
+  launchExtendedContext: false,
   terminal: "system_default",
   terminals: [{ kind: "system_default", label: "System default", isAvailable: true }],
   lastWorkspace: null,

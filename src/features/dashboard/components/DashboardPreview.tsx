@@ -26,6 +26,7 @@ const previewSnapshot = {
     extended: { fable: false, opus: false, sonnet: false, haiku: false },
   },
   launchModelId: "qwen3.8-max",
+  launchExtendedContext: true,
   terminal: TTerminalKind.SystemDefault,
   terminals: [
     { kind: TTerminalKind.SystemDefault, label: "System default", isAvailable: true },

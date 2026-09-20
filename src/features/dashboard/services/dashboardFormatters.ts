@@ -62,6 +62,7 @@ export const launchFormDefaults = (snapshot: IDashboardSnapshot) => {
     extendedOpus: snapshot.aliases.extended.opus,
     extendedSonnet: snapshot.aliases.extended.sonnet,
     extendedHaiku: snapshot.aliases.extended.haiku,
+    extendedModelId: snapshot.launchExtendedContext,
     customModels: map(snapshot.customModels, (modelId) => {
       return { modelId } satisfies ICustomModelField
     }),
