@@ -4,7 +4,6 @@ import type { FC } from "react"
 import { ConnectionSection } from "@/features/dashboard/components/ConnectionSection"
 import { DashboardShell } from "@/features/dashboard/components/DashboardShell"
 import { LaunchSection } from "@/features/dashboard/components/LaunchSection"
-import { StartupSection } from "@/features/dashboard/components/StartupSection"
 import { TDashboardAlertStatus } from "@/features/dashboard/constants/dashboardLabels"
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard"
 import { DashboardAlert } from "@/features/dashboard/presentations/DashboardAlert"
@@ -58,7 +57,6 @@ export const Dashboard: FC = () => {
         onSaveSettings={dashboard.saveSettings}
         onLaunch={dashboard.launch}
       />
-      <StartupSection />
     </DashboardShell>
   )
 }
