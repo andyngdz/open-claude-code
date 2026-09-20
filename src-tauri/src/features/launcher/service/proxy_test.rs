@@ -1,5 +1,7 @@
 use std::{fs, path::Path};
 
+use open_claude_code_backend::{open_code_go_public_model_id, ContextWindow};
+
 use super::super::macos_shell::write_launch_script;
 use super::{claude_proxy_env, proxy_variables, ClaudeProxyEnv};
 use crate::features::settings::ModelAliasMapping;
@@ -26,6 +28,41 @@ fn proxy_variables_name_every_setting_claude_code_reads() {
         .collect();
 
     assert_eq!(names, EXPECTED_NAMES);
+}
+
+#[test]
+fn a_ticked_alias_carries_the_one_million_marker() {
+    let mut aliases = ModelAliasMapping::default();
+    aliases.extended.opus = ContextWindow::OneMillion;
+    let proxy_env = claude_proxy_env("http://127.0.0.1:9", "token", &aliases);
+
+    assert_eq!(
+        proxy_env.opus,
+        format!("{}[1m]", open_code_go_public_model_id(&aliases.opus))
+    );
+    assert!(!proxy_env.fable.ends_with("[1m]"));
+    assert!(!proxy_env.sonnet.ends_with("[1m]"));
+    assert!(!proxy_env.haiku.ends_with("[1m]"));
+}
+
+#[test]
+fn an_unticked_mapping_leaves_every_proxy_id_bare() {
+    let aliases = ModelAliasMapping::default();
+    let proxy_env = claude_proxy_env("http://127.0.0.1:9", "token", &aliases);
+
+    assert_eq!(
+        proxy_env.fable,
+        open_code_go_public_model_id(&aliases.fable)
+    );
+    assert_eq!(proxy_env.opus, open_code_go_public_model_id(&aliases.opus));
+    assert_eq!(
+        proxy_env.sonnet,
+        open_code_go_public_model_id(&aliases.sonnet)
+    );
+    assert_eq!(
+        proxy_env.haiku,
+        open_code_go_public_model_id(&aliases.haiku)
+    );
 }
 
 #[test]

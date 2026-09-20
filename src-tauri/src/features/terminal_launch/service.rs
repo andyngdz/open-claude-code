@@ -3,7 +3,9 @@ use std::{
     process::Command,
 };
 
-use open_claude_code_backend::open_code_go_public_model_id;
+use open_claude_code_backend::{
+    open_code_go_public_model_id, split_one_million_suffix, with_one_million_suffix, ContextWindow,
+};
 
 use super::CliError;
 use crate::features::{
@@ -33,11 +35,37 @@ pub(crate) fn launch(model: Option<String>, claude_args: &[String]) -> Result<()
         .as_ref()
         .and_then(|settings| settings.launch_model_id.as_deref());
     let default_index = prompt_default_index(&endpoint, cli_model_id, dashboard_model_id);
-    let model_id = select_model(&endpoint, model, default_index)?;
+    let (requested_model, requested_window) = requested_model(model);
+    let model_id = select_model(&endpoint, requested_model, default_index)?;
     if remember_model {
         remember_cli_launch_model(&store, &model_id);
     }
-    exec_claude(&endpoint, &model_id, claude_args)
+    let window = launch_context_window(&endpoint, &model_id, requested_window);
+    exec_claude(&endpoint, &model_id, window, claude_args)
+}
+
+/// Splits the 1M marker off the model the caller named on the command line.
+///
+/// The catalog is searched with the bare id, so a marker on an id the catalog
+/// does not offer still reads as an unknown model rather than a launch.
+fn requested_model(model: Option<String>) -> (Option<String>, ContextWindow) {
+    let Some(model_id) = model else {
+        return (None, ContextWindow::Standard);
+    };
+    let (bare_id, window) = split_one_million_suffix(&model_id);
+    (Some(bare_id.to_owned()), window)
+}
+
+/// Returns the window Claude Code is told for the model this launch picked.
+///
+/// A marker the caller typed wins over the alias rows, so `--model 'x[1m]'` is
+/// never quietly downgraded.
+fn launch_context_window(
+    endpoint: &RuntimeEndpoint,
+    model_id: &str,
+    requested: ContextWindow,
+) -> ContextWindow {
+    requested.widest(endpoint.aliases.declared_window(model_id))
 }
 
 fn map_read_error(error: RuntimeEndpointError) -> CliError {
@@ -116,6 +144,7 @@ fn print_model_prompt(models: &[RuntimeModel], default_index: usize) -> Result<(
 fn exec_claude(
     endpoint: &RuntimeEndpoint,
     model_id: &str,
+    window: ContextWindow,
     claude_args: &[String],
 ) -> Result<(), CliError> {
     let program = claude_executable().map_err(|_| CliError::ClaudeNotFound)?;
@@ -123,7 +152,9 @@ fn exec_claude(
     let mut command = Command::new(program);
     command
         .arg(crate::constants::MODEL_FLAG)
-        .arg(open_code_go_public_model_id(model_id))
+        .arg(open_code_go_public_model_id(&with_one_million_suffix(
+            model_id, window,
+        )))
         .args(claude_args);
     apply_appimage_host_env(&mut command);
     apply_proxy_env(&mut command, &proxy_env);

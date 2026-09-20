@@ -1,4 +1,4 @@
-use open_claude_code_backend::OpenCodeGoBackend;
+use open_claude_code_backend::{with_one_million_suffix, OpenCodeGoBackend};
 use secrecy::ExposeSecret;
 use tokio::sync::Mutex;
 
@@ -147,6 +147,12 @@ impl AppSession {
     ) -> Result<DashboardSnapshot, SessionError> {
         let mut inner = self.inner.lock().await;
         runtime::ensure_can_launch(&inner, &input).await?;
+        // Only the id handed to Claude Code carries the marker: the catalog
+        // lookup above ran on the bare id, and the saved settings keep it bare.
+        let model_id = with_one_million_suffix(
+            &input.model_id,
+            inner.settings.aliases.declared_window(&input.model_id),
+        );
         let session_id = new_launch_session_id();
         inner
             .backend
@@ -160,7 +166,7 @@ impl AppSession {
             &inner.processes,
             inner.settings.terminal,
             &input.workspace,
-            &input.model_id,
+            &model_id,
             inner.backend.gateway_base_url(),
             inner.backend.gateway_token(),
             &inner.settings.aliases,
