@@ -1,6 +1,11 @@
 use std::io;
 
-use super::{map_read_error, prompt_default_index, select_model, CliError};
+use open_claude_code_backend::ContextWindow;
+
+use super::{
+    launch_context_window, map_read_error, prompt_default_index, requested_model, select_model,
+    CliError,
+};
 use crate::features::{
     errors::RuntimeEndpointError,
     runtime_endpoint::{RuntimeEndpoint, RuntimeModel},
@@ -95,6 +100,91 @@ fn sample_endpoint() -> RuntimeEndpoint {
             opus: "qwen3.8-max".to_owned(),
             sonnet: "qwen3.8-flash".to_owned(),
             haiku: "qwen3.8-flash".to_owned(),
+            ..ModelAliasMapping::default()
         },
+        launch_model_id: Some("qwen3.8-max".to_owned()),
+        launch_extended_context: ContextWindow::Standard,
     }
+}
+
+#[test]
+fn a_marker_on_the_requested_model_is_split_off_before_the_catalog_lookup() {
+    let (model_id, window) = requested_model(Some("deepseek-v4.1-flash[1m]".to_owned()));
+
+    assert_eq!(model_id.as_deref(), Some("deepseek-v4.1-flash"));
+    assert_eq!(window, ContextWindow::OneMillion);
+}
+
+#[test]
+fn a_requested_model_without_a_marker_keeps_the_default_window() {
+    let (model_id, window) = requested_model(Some("deepseek-v4.1-flash".to_owned()));
+
+    assert_eq!(model_id.as_deref(), Some("deepseek-v4.1-flash"));
+    assert_eq!(window, ContextWindow::Standard);
+}
+
+#[test]
+fn marking_a_model_the_catalog_lacks_is_still_an_unknown_model() {
+    let endpoint = sample_endpoint();
+    let (model_id, _) = requested_model(Some("missing[1m]".to_owned()));
+
+    let error = select_model(&endpoint, model_id, 0).unwrap_err();
+
+    assert!(matches!(error, CliError::UnknownModel));
+}
+
+#[test]
+fn a_marker_typed_on_the_command_line_wins_over_the_alias_rows() {
+    let endpoint = sample_endpoint();
+
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::OneMillion),
+        ContextWindow::OneMillion
+    );
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
+}
+
+#[test]
+fn a_ticked_default_row_marks_the_model_it_points_at() {
+    let mut endpoint = sample_endpoint();
+    endpoint.launch_extended_context = ContextWindow::OneMillion;
+
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::OneMillion
+    );
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-flash", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
+}
+
+#[test]
+fn a_default_row_the_handshake_never_carried_marks_nothing() {
+    let mut endpoint = sample_endpoint();
+    endpoint.launch_model_id = None;
+    endpoint.launch_extended_context = ContextWindow::OneMillion;
+
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
+}
+
+#[test]
+fn a_ticked_alias_row_marks_the_model_the_cli_launches() {
+    let mut endpoint = sample_endpoint();
+    endpoint.aliases.extended.sonnet = ContextWindow::OneMillion;
+
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-flash", ContextWindow::Standard),
+        ContextWindow::OneMillion
+    );
+    assert_eq!(
+        launch_context_window(&endpoint, "qwen3.8-max", ContextWindow::Standard),
+        ContextWindow::Standard
+    );
 }

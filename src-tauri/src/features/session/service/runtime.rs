@@ -36,6 +36,8 @@ pub(super) fn publish_runtime(inner: &AppSessionState) -> Result<(), SessionErro
         token: inner.backend.gateway_token().expose_secret().to_owned(),
         models: published_runtime_models(&inner.settings),
         aliases: inner.settings.aliases.clone(),
+        launch_model_id: Some(launch_model_id(&inner.settings)),
+        launch_extended_context: inner.settings.launch_extended_context,
     };
     endpoint
         .write(&inner.settings_store.runtime_path())
@@ -94,6 +96,7 @@ pub(super) async fn snapshot_from_state(inner: &AppSessionState) -> DashboardSna
         custom_models: inner.settings.custom_models.clone(),
         aliases: inner.settings.aliases.clone(),
         launch_model_id: launch_model_id(&inner.settings),
+        launch_extended_context: inner.settings.launch_extended_context,
         terminal,
         terminals,
         last_workspace: inner.settings.last_workspace.clone(),
@@ -204,7 +207,11 @@ pub(super) fn ensure_known_model(
     Err(SessionError::UnknownModel)
 }
 
-fn launch_model_id(settings: &AppSettings) -> String {
+/// Returns the model the Default model row points at.
+///
+/// A saved id the catalog no longer offers falls back to the Sonnet alias, the
+/// model a launch runs when no Default model was ever chosen.
+pub(super) fn launch_model_id(settings: &AppSettings) -> String {
     settings
         .launch_model_id
         .clone()

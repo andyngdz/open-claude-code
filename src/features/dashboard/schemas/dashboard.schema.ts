@@ -62,6 +62,14 @@ const terminalOptionSchema = z.object({
   isAvailable: z.boolean(),
 })
 
+/// Ticks the four alias rows carry. The snapshot is the only source for them.
+const extendedContextSchema = z.object({
+  fable: z.boolean(),
+  opus: z.boolean(),
+  sonnet: z.boolean(),
+  haiku: z.boolean(),
+})
+
 export const dashboardSnapshotSchema = z.object({
   connection: connectionSchema,
   models: z.array(modelSchema),
@@ -71,8 +79,10 @@ export const dashboardSnapshotSchema = z.object({
     opus: z.string(),
     sonnet: z.string(),
     haiku: z.string(),
+    extended: extendedContextSchema,
   }),
   launchModelId: z.string(),
+  launchExtendedContext: z.boolean(),
   terminal: terminalKindSchema,
   terminals: z.array(terminalOptionSchema),
   lastWorkspace: z.string().nullable(),
@@ -90,6 +100,11 @@ export const launchFormSchema = z.object({
   opus: z.string().trim().min(1, "Choose an Opus model."),
   sonnet: z.string().trim().min(1, "Choose a Sonnet model."),
   haiku: z.string().trim().min(1, "Choose a Haiku model."),
+  extendedFable: z.boolean(),
+  extendedOpus: z.boolean(),
+  extendedSonnet: z.boolean(),
+  extendedHaiku: z.boolean(),
+  extendedModelId: z.boolean(),
   customModels: z.array(customModelFieldSchema),
 })
 

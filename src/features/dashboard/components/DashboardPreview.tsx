@@ -23,8 +23,10 @@ const previewSnapshot = {
     opus: "qwen3.8-max",
     sonnet: "qwen3.8-max",
     haiku: "qwen3.8-flash",
+    extended: { fable: false, opus: false, sonnet: false, haiku: false },
   },
   launchModelId: "qwen3.8-max",
+  launchExtendedContext: true,
   terminal: TTerminalKind.SystemDefault,
   terminals: [
     { kind: TTerminalKind.SystemDefault, label: "System default", isAvailable: true },

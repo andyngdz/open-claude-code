@@ -8,7 +8,7 @@ use fs2::FileExt;
 use serde::{Deserialize, Serialize};
 
 use open_claude_code_backend::{
-    ModelCatalogEntry, DEFAULT_FAST_MODEL_ID, DEFAULT_PRIMARY_MODEL_ID,
+    ContextWindow, ModelCatalogEntry, DEFAULT_FAST_MODEL_ID, DEFAULT_PRIMARY_MODEL_ID,
 };
 
 use crate::features::{errors::SettingsError, launcher::TerminalKind};
@@ -23,6 +23,43 @@ pub(crate) struct ModelAliasMapping {
     pub(crate) opus: String,
     pub(crate) sonnet: String,
     pub(crate) haiku: String,
+    /// Old documents and handshakes predate this key and read as unticked.
+    #[serde(default)]
+    pub(crate) extended: ExtendedContext,
+}
+
+/// Declares, per alias, that the model that row points at has a 1M token window.
+///
+/// The declaration belongs to the row, not to the model, so the same model can
+/// be 1M through one row and unchanged through another.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ExtendedContext {
+    pub(crate) fable: ContextWindow,
+    pub(crate) opus: ContextWindow,
+    pub(crate) sonnet: ContextWindow,
+    pub(crate) haiku: ContextWindow,
+}
+
+impl ModelAliasMapping {
+    /// Returns the window the alias rows declare for a model.
+    ///
+    /// The wider declaration wins, so unticking one row cannot take 1M away
+    /// from a model another row asks for. A model no row points at reads as
+    /// `ContextWindow::Standard`.
+    pub(crate) fn declared_window(&self, model_id: &str) -> ContextWindow {
+        [
+            (self.fable.as_str(), self.extended.fable),
+            (self.opus.as_str(), self.extended.opus),
+            (self.sonnet.as_str(), self.extended.sonnet),
+            (self.haiku.as_str(), self.extended.haiku),
+        ]
+        .into_iter()
+        .filter(|(alias_model_id, _)| *alias_model_id == model_id)
+        .fold(ContextWindow::Standard, |window, (_, alias_window)| {
+            window.widest(alias_window)
+        })
+    }
 }
 
 impl Default for ModelAliasMapping {
@@ -32,6 +69,7 @@ impl Default for ModelAliasMapping {
             opus: DEFAULT_PRIMARY_MODEL_ID.to_owned(),
             sonnet: DEFAULT_PRIMARY_MODEL_ID.to_owned(),
             haiku: DEFAULT_FAST_MODEL_ID.to_owned(),
+            extended: ExtendedContext::default(),
         }
     }
 }
@@ -46,6 +84,12 @@ pub(crate) struct AppSettings {
     pub(crate) aliases: ModelAliasMapping,
     #[serde(default)]
     pub(crate) launch_model_id: Option<String>,
+    /// Declares the 1M window for the model `launch_model_id` names.
+    ///
+    /// The Default model is not an alias, so its row keeps its own declaration
+    /// beside the model it points at.
+    #[serde(default)]
+    pub(crate) launch_extended_context: ContextWindow,
     /// Model picked at the terminal prompt. Only the CLI writes it.
     #[serde(default)]
     pub(crate) cli_launch_model_id: Option<String>,
@@ -62,6 +106,7 @@ impl Default for AppSettings {
             last_workspace: None,
             aliases: ModelAliasMapping::default(),
             launch_model_id: None,
+            launch_extended_context: ContextWindow::default(),
             cli_launch_model_id: None,
             custom_models: Vec::new(),
             cached_models: Vec::new(),
@@ -77,6 +122,7 @@ pub(crate) struct SaveProviderSettingsInput {
     pub(crate) terminal: TerminalKind,
     pub(crate) model_id: String,
     pub(crate) aliases: ModelAliasMapping,
+    pub(crate) launch_extended_context: ContextWindow,
     pub(crate) custom_models: Vec<String>,
 }
 

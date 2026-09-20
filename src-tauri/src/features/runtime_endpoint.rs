@@ -6,6 +6,8 @@ use std::os::unix::fs::OpenOptionsExt;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use open_claude_code_backend::ContextWindow;
+
 use crate::features::{errors::RuntimeEndpointError, settings::ModelAliasMapping};
 
 /// Model row the CLI can print without opening the settings window.
@@ -24,6 +26,14 @@ pub(crate) struct RuntimeEndpoint {
     pub(crate) token: String,
     pub(crate) models: Vec<RuntimeModel>,
     pub(crate) aliases: ModelAliasMapping,
+    /// The effective Default model, which decides the model a bare launch runs.
+    #[serde(default)]
+    pub(crate) launch_model_id: Option<String>,
+    /// The 1M tick on the Default model row.
+    ///
+    /// A handshake written before this key existed reads as unticked.
+    #[serde(default)]
+    pub(crate) launch_extended_context: ContextWindow,
 }
 
 impl RuntimeEndpoint {

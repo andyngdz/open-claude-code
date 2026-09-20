@@ -1,6 +1,8 @@
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+use open_claude_code_backend::ContextWindow;
+
 use super::{
     default_model_index, parse_model_flag, remembered_model_index, resolve_model_choice,
     runtime_path_in, RuntimeEndpoint, RuntimeModel,
@@ -53,12 +55,7 @@ fn runtime_file_round_trips() {
     let _ = std::fs::remove_dir_all(&directory);
     std::fs::create_dir_all(&directory).unwrap();
     let path = runtime_path_in(&directory);
-    let endpoint = RuntimeEndpoint {
-        base_url: "http://127.0.0.1:9".to_owned(),
-        token: "local-token".to_owned(),
-        models: sample_models(),
-        aliases: ModelAliasMapping::default(),
-    };
+    let endpoint = sample_endpoint("http://127.0.0.1:9", "local-token");
 
     endpoint.write(&path).unwrap();
     let loaded = RuntimeEndpoint::read(&path).unwrap();
@@ -82,18 +79,8 @@ fn runtime_file_replaces_a_previous_handshake() {
     let _ = std::fs::remove_dir_all(&directory);
     std::fs::create_dir_all(&directory).unwrap();
     let path = runtime_path_in(&directory);
-    let initial_endpoint = RuntimeEndpoint {
-        base_url: "http://127.0.0.1:9".to_owned(),
-        token: "initial-token".to_owned(),
-        models: sample_models(),
-        aliases: ModelAliasMapping::default(),
-    };
-    let replacement_endpoint = RuntimeEndpoint {
-        base_url: "http://127.0.0.1:10".to_owned(),
-        token: "replacement-token".to_owned(),
-        models: sample_models(),
-        aliases: ModelAliasMapping::default(),
-    };
+    let initial_endpoint = sample_endpoint("http://127.0.0.1:9", "initial-token");
+    let replacement_endpoint = sample_endpoint("http://127.0.0.1:10", "replacement-token");
 
     initial_endpoint.write(&path).unwrap();
     replacement_endpoint.write(&path).unwrap();
@@ -115,6 +102,27 @@ fn remembered_model_index_only_accepts_a_model_still_in_the_catalog() {
     );
     assert_eq!(remembered_model_index(&models, Some("retired-model")), None);
     assert_eq!(remembered_model_index(&models, None), None);
+}
+
+#[test]
+fn a_handshake_without_the_default_row_keys_reads_as_unticked() {
+    let serialized = r#"{"baseUrl":"http://127.0.0.1:9","token":"local-token","models":[],"aliases":{"fable":"qwen3.8-max","opus":"qwen3.8-max","sonnet":"qwen3.8-max","haiku":"qwen3.8-flash"}}"#;
+
+    let endpoint: RuntimeEndpoint = serde_json::from_str(serialized).unwrap();
+
+    assert_eq!(endpoint.launch_model_id, None);
+    assert_eq!(endpoint.launch_extended_context, ContextWindow::Standard);
+}
+
+fn sample_endpoint(base_url: &str, token: &str) -> RuntimeEndpoint {
+    RuntimeEndpoint {
+        base_url: base_url.to_owned(),
+        token: token.to_owned(),
+        models: sample_models(),
+        aliases: ModelAliasMapping::default(),
+        launch_model_id: None,
+        launch_extended_context: ContextWindow::Standard,
+    }
 }
 
 fn sample_models() -> Vec<RuntimeModel> {

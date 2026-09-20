@@ -1,6 +1,8 @@
 use std::{path::PathBuf, process::Command};
 
-use open_claude_code_backend::open_code_go_public_model_id;
+use open_claude_code_backend::{
+    open_code_go_public_model_id, with_one_million_suffix, ContextWindow,
+};
 
 use super::discovery::find_executable;
 use crate::features::{errors::LauncherError, settings::ModelAliasMapping};
@@ -24,6 +26,8 @@ pub(crate) struct ClaudeProxyEnv {
 }
 
 /// Builds the proxy environment from the saved alias mapping.
+///
+/// Each alias id carries the 1M marker only when its own row asks for it.
 pub(crate) fn claude_proxy_env(
     proxy_base_url: &str,
     proxy_token: &str,
@@ -32,11 +36,19 @@ pub(crate) fn claude_proxy_env(
     ClaudeProxyEnv {
         base_url: proxy_base_url.to_owned(),
         token: proxy_token.to_owned(),
-        fable: open_code_go_public_model_id(&aliases.fable),
-        opus: open_code_go_public_model_id(&aliases.opus),
-        sonnet: open_code_go_public_model_id(&aliases.sonnet),
-        haiku: open_code_go_public_model_id(&aliases.haiku),
+        fable: alias_model_id(&aliases.fable, aliases.extended.fable),
+        opus: alias_model_id(&aliases.opus, aliases.extended.opus),
+        sonnet: alias_model_id(&aliases.sonnet, aliases.extended.sonnet),
+        haiku: alias_model_id(&aliases.haiku, aliases.extended.haiku),
     }
+}
+
+/// Builds the alias value Claude Code reads, marked when that row asks for 1M.
+///
+/// The marker is added to the provider id, and the public prefix goes on last so
+/// the gateway still resolves the alias.
+fn alias_model_id(model_id: &str, window: ContextWindow) -> String {
+    open_code_go_public_model_id(&with_one_million_suffix(model_id, window))
 }
 
 /// Resolves the Claude Code executable on PATH.

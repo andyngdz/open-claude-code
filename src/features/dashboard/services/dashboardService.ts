@@ -69,11 +69,18 @@ const settingsInput = (values: ILaunchForm) => {
   return {
     terminal: values.terminal,
     modelId: values.modelId,
+    launchExtendedContext: values.extendedModelId,
     aliases: {
       fable: values.fable,
       opus: values.opus,
       sonnet: values.sonnet,
       haiku: values.haiku,
+      extended: {
+        fable: values.extendedFable,
+        opus: values.extendedOpus,
+        sonnet: values.extendedSonnet,
+        haiku: values.extendedHaiku,
+      },
     },
     customModels: customModelIds(values.customModels),
   }
