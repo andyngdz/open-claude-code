@@ -101,6 +101,33 @@ print_install_ok() {
   esac
 }
 
+# Opens the freshly installed app in $1 so the local gateway is up right away.
+#
+# Nothing here may fail the install: a headless session, a copy already running,
+# or a launcher that refuses are each left alone rather than reported as an
+# install error.
+start_installed_app() {
+  local app_path="$1"
+
+  if [ "$(uname -s)" = 'Darwin' ]; then
+    # The bundle path can hold spaces, so -a takes the whole path as one argument.
+    open -a "$app_path" >/dev/null 2>&1 || true
+    return
+  fi
+
+  if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
+    return
+  fi
+
+  # pgrep matches the whole command line, so a running copy is left alone
+  # instead of opening a second window.
+  if command -v pgrep >/dev/null 2>&1 && pgrep -f "$app_path" >/dev/null 2>&1; then
+    return
+  fi
+
+  "$app_path" >/dev/null 2>&1 &
+}
+
 main() {
   local temporary_directory release_metadata operating_system machine_architecture
   local asset_pattern asset_url package_path install_kind install_command
@@ -160,6 +187,7 @@ main() {
       sudo mkdir -p /usr/local/bin
       sudo install -m 755 "$cli_wrapper" /usr/local/bin/open-claude-code
       print_install_ok /usr/local/bin
+      start_installed_app "$installed_app"
       ;;
     Linux)
       case "$machine_architecture" in
@@ -207,8 +235,10 @@ main() {
         install_appimage_launcher "$package_path" "$temporary_directory"
         write_exec_wrapper "$package_path" "${HOME}/.local/bin/open-claude-code"
         print_install_ok "${HOME}/.local/bin"
+        start_installed_app "${HOME}/.local/bin/open-claude-code"
       else
         print_install_ok /usr/bin
+        start_installed_app /usr/bin/open-claude-code
       fi
       ;;
     *)

@@ -57,3 +57,12 @@ export const EXTENDED_CONTEXT_LABEL = "1M context"
 
 export const EXTENDED_CONTEXT_HINT =
   "Only for models that really serve 1M tokens. Past 200K the request fails instead of compacting."
+
+export const STARTUP_TITLE = "Startup"
+
+export const STARTUP_LABEL = "Start Open Claude Code when you log in"
+
+export const STARTUP_HINT =
+  "Signs you in at login through your operating system, so the local gateway is already up. Leave it off to start the app yourself."
+
+export const STARTUP_FAILED_TOAST = "Startup setting failed"

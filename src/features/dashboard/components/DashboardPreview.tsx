@@ -3,6 +3,7 @@ import type { FC } from "react"
 import { ConnectionSection } from "@/features/dashboard/components/ConnectionSection"
 import { DashboardShell } from "@/features/dashboard/components/DashboardShell"
 import { LaunchSection } from "@/features/dashboard/components/LaunchSection"
+import { StartupSection } from "@/features/dashboard/components/StartupSection"
 import {
   TConnectionStatus,
   TPendingAction,
@@ -60,6 +61,7 @@ export const DashboardPreview: FC = () => {
         onSaveSettings={saveSettings}
         onLaunch={launch}
       />
+      <StartupSection />
     </DashboardShell>
   )
 }

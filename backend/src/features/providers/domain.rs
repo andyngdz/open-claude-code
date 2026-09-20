@@ -76,7 +76,10 @@ pub struct ModelCatalogEntry {
 }
 
 /// Represents whether a provider credential can be used.
-#[derive(Clone, Debug, Serialize)]
+///
+/// The control API carries this state across the process boundary, so it reads
+/// back as well as it writes.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(tag = "status", rename_all = "snake_case")]
 pub enum ProviderConnectionState {
     /// No credential exists in the system keyring.

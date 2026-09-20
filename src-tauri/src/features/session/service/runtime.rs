@@ -4,8 +4,10 @@ use open_claude_code_backend::{ModelCatalogEntry, OpenCodeGoBackend, ProviderCon
 use secrecy::ExposeSecret;
 
 use super::super::{DashboardSnapshot, SessionError};
+use super::{connection, AppSessionState};
 use crate::features::{
     errors::SettingsError,
+    gateway::published_catalog,
     launcher::{
         list_available_terminals, new_launch_session_id, LaunchClaudeInput, TerminalKind,
         TerminalOption,
@@ -13,8 +15,6 @@ use crate::features::{
     runtime_endpoint::{RuntimeEndpoint, RuntimeModel},
     settings::{current_epoch_seconds, AppSettings, ModelAliasMapping, SettingsStore},
 };
-
-use super::AppSessionState;
 
 /// Stores a refreshed catalog and republishes the CLI handshake.
 pub(super) async fn persist_catalog(
@@ -24,16 +24,15 @@ pub(super) async fn persist_catalog(
     inner.settings.cached_models = catalog;
     inner.settings.catalog_refreshed_at_epoch_seconds = Some(current_epoch_seconds());
     save_settings(inner)?;
-    configure_gateway(inner).await;
-    publish_runtime(inner)?;
-    Ok(())
+    configure_gateway(inner).await?;
+    publish_runtime(inner)
 }
 
 /// Writes the private gateway handshake for the CLI.
 pub(super) fn publish_runtime(inner: &AppSessionState) -> Result<(), SessionError> {
     let endpoint = RuntimeEndpoint {
-        base_url: inner.backend.gateway_base_url().to_owned(),
-        token: inner.backend.gateway_token().expose_secret().to_owned(),
+        base_url: inner.gateway.base_url()?.to_owned(),
+        token: inner.gateway.local_token()?.expose_secret().to_owned(),
         models: published_runtime_models(&inner.settings),
         aliases: inner.settings.aliases.clone(),
         launch_model_id: Some(launch_model_id(&inner.settings)),
@@ -74,16 +73,18 @@ fn with_cli_launch_model(mut settings: AppSettings, persisted: Option<AppSetting
     settings
 }
 
-/// Pushes the saved catalog into the local gateway.
-pub(super) async fn configure_gateway(inner: &AppSessionState) {
+/// Pushes the saved catalog into the gateway process.
+pub(super) async fn configure_gateway(inner: &AppSessionState) -> Result<(), SessionError> {
     inner
-        .backend
-        .configure_gateway(
-            published_catalog(&inner.settings),
-            inner.settings.custom_models.clone(),
-            new_launch_session_id(),
+        .gateway
+        .client()?
+        .publish_gateway(
+            &published_catalog(&inner.settings),
+            &inner.settings.custom_models,
+            &new_launch_session_id(),
         )
-        .await;
+        .await?;
+    Ok(())
 }
 
 /// Builds the dashboard snapshot from the current session.
@@ -91,7 +92,7 @@ pub(super) async fn snapshot_from_state(inner: &AppSessionState) -> DashboardSna
     let terminals = list_available_terminals();
     let terminal = coerce_terminal_selection(inner.settings.terminal, &terminals);
     DashboardSnapshot {
-        connection: inner.backend.connection_state().await,
+        connection: connection::published_connection(&inner.gateway).await,
         models: published_catalog(&inner.settings),
         custom_models: inner.settings.custom_models.clone(),
         aliases: inner.settings.aliases.clone(),
@@ -112,12 +113,11 @@ fn coerce_terminal_selection(selected: TerminalKind, terminals: &[TerminalOption
 }
 
 /// Rejects a launch when the provider or model is not ready.
-/// Rejects a launch when the provider or model is not ready.
 pub(super) async fn ensure_can_launch(
     inner: &AppSessionState,
     input: &LaunchClaudeInput,
 ) -> Result<(), SessionError> {
-    let connection = inner.backend.connection_state().await;
+    let connection = connection::published_connection(&inner.gateway).await;
     if !matches!(connection, ProviderConnectionState::Connected) {
         return Err(SessionError::NotConnected);
     }
@@ -126,14 +126,6 @@ pub(super) async fn ensure_can_launch(
         &inner.settings.custom_models,
         &input.model_id,
     )
-}
-
-/// Returns the cached catalog, or the fallback catalog when none is cached.
-pub(super) fn published_catalog(settings: &AppSettings) -> Vec<ModelCatalogEntry> {
-    if settings.cached_models.is_empty() {
-        return OpenCodeGoBackend::fallback_catalog();
-    }
-    settings.cached_models.clone()
 }
 
 /// Publishes both discovered and custom models for the terminal CLI picker.

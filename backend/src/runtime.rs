@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use secrecy::SecretString;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
             ModelCatalogEntry, Provider, ProviderConnectionState, ProviderId, ProviderRegistry,
         },
     },
-    interface::{start_gateway, GatewayRuntime},
+    interface::{start_gateway, GatewayPublisher, GatewayRuntime},
 };
 
 /// Owns the OpenCode Go provider and its Claude-compatible local gateway.
@@ -38,8 +37,7 @@ impl OpenCodeGoBackend {
         };
         let gateway = start_gateway(
             registry,
-            Arc::new(RwLock::new(configuration)),
-            Arc::new(RwLock::new(Uuid::new_v4().to_string())),
+            GatewayPublisher::new(configuration, Uuid::new_v4().to_string()),
         )
         .await?;
 
@@ -52,7 +50,10 @@ impl OpenCodeGoBackend {
     }
 
     /// Loads the saved API key for the local desktop settings surface.
-    pub async fn load_saved_api_key(&self) -> Result<Option<SecretString>, OpenCodeGoBackendError> {
+    ///
+    /// Reports a provider error when no key is stored, so the caller does not
+    /// mistake an absent credential for an empty one.
+    pub async fn load_saved_api_key(&self) -> Result<SecretString, OpenCodeGoBackendError> {
         self.provider.load_saved_api_key().await.map_err(Into::into)
     }
 
@@ -102,6 +103,11 @@ impl OpenCodeGoBackend {
     /// Returns the in-memory gateway credential passed only to launched processes.
     pub fn gateway_token(&self) -> &SecretString {
         self.gateway.local_token()
+    }
+
+    /// Returns the credential only the process that spawned this backend holds.
+    pub fn control_token(&self) -> &SecretString {
+        self.gateway.control_token()
     }
 
     /// Stops the owned gateway task.

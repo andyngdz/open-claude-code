@@ -22,3 +22,17 @@ pub enum GatewayError {
     #[error("the local gateway did not stop before the timeout")]
     StopTimeout,
 }
+
+/// Reports failures while the desktop app drives the gateway it spawned.
+#[derive(Debug, Error)]
+pub enum ControlError {
+    /// The control request never reached a listening gateway.
+    #[error("the local gateway could not be reached")]
+    Unreachable(#[source] reqwest::Error),
+    /// The control route refused the request with a message ready to show.
+    #[error("{0}")]
+    Rejected(String),
+    /// The control response carried a body the client could not read.
+    #[error("the local gateway returned an unreadable response")]
+    Unexpected(#[source] reqwest::Error),
+}
