@@ -166,3 +166,39 @@ fn older_settings_without_extended_context_still_load() {
     assert_eq!(parsed.aliases.extended.fable, ContextWindow::Standard);
     assert_eq!(parsed.aliases.extended.haiku, ContextWindow::Standard);
 }
+
+#[test]
+fn the_default_model_tick_round_trips_beside_its_model() {
+    let settings = AppSettings {
+        launch_model_id: Some("qwen3.8-max".to_owned()),
+        launch_extended_context: ContextWindow::OneMillion,
+        ..AppSettings::default()
+    };
+
+    let serialized = serde_json::to_string(&settings).expect("settings should serialize in a test");
+
+    assert!(serialized.contains("\"launchExtendedContext\":true"));
+    let parsed: AppSettings =
+        serde_json::from_str(&serialized).expect("settings should deserialize in a test");
+    assert_eq!(parsed.launch_model_id.as_deref(), Some("qwen3.8-max"));
+    assert_eq!(parsed.launch_extended_context, ContextWindow::OneMillion);
+}
+
+#[test]
+fn older_settings_without_the_default_model_tick_still_load() {
+    let settings = AppSettings {
+        launch_model_id: Some("qwen3.8-max".to_owned()),
+        ..AppSettings::default()
+    };
+    let mut serialized =
+        serde_json::to_value(&settings).expect("settings should serialize in a test");
+    serialized
+        .as_object_mut()
+        .expect("settings JSON should be an object")
+        .remove("launchExtendedContext");
+
+    let parsed: AppSettings =
+        serde_json::from_value(serialized).expect("older settings should deserialize in a test");
+
+    assert_eq!(parsed.launch_extended_context, ContextWindow::Standard);
+}

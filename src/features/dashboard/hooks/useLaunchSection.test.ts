@@ -170,6 +170,25 @@ describe("useLaunchSection", () => {
     })
   })
 
+  it("autosaves a ticked Default model row", async () => {
+    vi.useFakeTimers()
+    const saveSettings = vi.fn().mockResolvedValue(true)
+    const { result } = renderHook(() => {
+      return useLaunchSection(snapshot, TPendingAction.None, saveSettings)
+    })
+
+    act(() => {
+      result.current.setValue("extendedModelId", true)
+      vi.advanceTimersByTime(350)
+    })
+
+    await vi.waitFor(() => {
+      expect(saveSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ extendedModelId: true }),
+      )
+    })
+  })
+
   it("keeps an empty custom model row instead of autosaving it away", async () => {
     vi.useFakeTimers()
     const saveSettings = vi.fn().mockResolvedValue(true)
