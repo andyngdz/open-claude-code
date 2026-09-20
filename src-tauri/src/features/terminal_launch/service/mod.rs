@@ -13,7 +13,10 @@ use super::CliError;
 use crate::features::{
     errors::RuntimeEndpointError,
     launch_window,
-    launcher::{apply_appimage_host_env, apply_proxy_env, claude_executable, claude_proxy_env},
+    launcher::{
+        apply_appimage_host_env, apply_proxy_env, claude_executable, claude_proxy_env,
+        host_working_directory,
+    },
     runtime_endpoint::{
         default_model_index, remembered_model_index, resolve_model_choice, RuntimeEndpoint,
         RuntimeModel,
@@ -169,6 +172,11 @@ fn exec_claude(
             model_id, window,
         )))
         .args(claude_args);
+    // The exec inherits this process's directory, which an AppImage run has moved
+    // into its mount, so the session goes back to the directory the user called from.
+    if let Some(working_directory) = host_working_directory() {
+        command.current_dir(working_directory);
+    }
     apply_appimage_host_env(&mut command);
     apply_proxy_env(&mut command, &proxy_env);
     run_claude(&mut command).map_err(CliError::Spawn)

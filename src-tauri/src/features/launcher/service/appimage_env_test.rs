@@ -1,6 +1,9 @@
 use std::{env, path::PathBuf};
 
-use super::{appimage_host_env, apply_env_overrides, ENV_APPDIR, ENV_APPIMAGE, ENV_ARGV0, ENV_OWD};
+use super::{
+    appimage_host_env, apply_env_overrides, recorded_working_directory, ENV_APPDIR, ENV_APPIMAGE,
+    ENV_ARGV0, ENV_OWD,
+};
 
 const APPDIR: &str = "/tmp/.mount_open-xxxx";
 
@@ -81,6 +84,21 @@ fn appimage_single_path_variables_are_removed() {
     );
 
     assert_eq!(overrides, vec![("GIO_MODULE_DIR".to_owned(), None)]);
+}
+
+#[test]
+fn recorded_invoking_directory_becomes_the_working_directory() {
+    assert_eq!(
+        recorded_working_directory(Some("/home/user/Projects/demo".to_owned())),
+        Some(PathBuf::from("/home/user/Projects/demo"))
+    );
+}
+
+#[test]
+fn absent_or_blank_recorded_directory_is_ignored() {
+    assert_eq!(recorded_working_directory(None), None);
+    assert_eq!(recorded_working_directory(Some(String::new())), None);
+    assert_eq!(recorded_working_directory(Some("  ".to_owned())), None);
 }
 
 #[test]
