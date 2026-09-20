@@ -128,13 +128,12 @@ start_installed_app() {
   "$app_path" >/dev/null 2>&1 &
 }
 
+# staging_directory belongs to the caller: the EXIT trap below runs after main()
+# returns, when anything main declares local is already unset.
 main() {
-  local temporary_directory release_metadata operating_system machine_architecture
+  local release_metadata operating_system machine_architecture
   local asset_pattern asset_url package_path install_kind install_command
   local disk_image mount_point app_path installed_app cli_wrapper
-
-  temporary_directory="$(mktemp -d)"
-  trap 'rm -rf "$temporary_directory"' EXIT INT TERM
 
   release_metadata="$(download "$release_api" -)"
   operating_system="$(uname -s)"
@@ -161,8 +160,8 @@ main() {
         exit 1
       fi
 
-      disk_image="$temporary_directory/Open.Claude.Code.dmg"
-      mount_point="$temporary_directory/mount"
+      disk_image="$staging_directory/Open.Claude.Code.dmg"
+      mount_point="$staging_directory/mount"
       download "$asset_url" "$disk_image"
       mkdir -p "$mount_point"
       # -mountpoint picks the path here, so hdiutil's mount table never has to
@@ -182,7 +181,7 @@ main() {
       installed_app="/Applications/$(basename "$app_path")"
       sudo ditto "$app_path" "$installed_app"
       hdiutil detach "$mount_point" >/dev/null
-      cli_wrapper="$temporary_directory/open-claude-code"
+      cli_wrapper="$staging_directory/open-claude-code"
       write_exec_wrapper "$installed_app/Contents/MacOS/open-claude-code" "$cli_wrapper"
       sudo mkdir -p /usr/local/bin
       sudo install -m 755 "$cli_wrapper" /usr/local/bin/open-claude-code
@@ -201,17 +200,17 @@ main() {
 
       if command -v apt-get >/dev/null 2>&1; then
         asset_pattern='_amd64\.deb'
-        package_path="$temporary_directory/open-claude-code.deb"
+        package_path="$staging_directory/open-claude-code.deb"
         install_kind='package'
         install_command='sudo apt-get install --yes'
       elif command -v dnf >/dev/null 2>&1; then
         asset_pattern='\.x86_64\.rpm'
-        package_path="$temporary_directory/open-claude-code.rpm"
+        package_path="$staging_directory/open-claude-code.rpm"
         install_kind='package'
         install_command='sudo dnf install --assumeyes'
       elif command -v yum >/dev/null 2>&1; then
         asset_pattern='\.x86_64\.rpm'
-        package_path="$temporary_directory/open-claude-code.rpm"
+        package_path="$staging_directory/open-claude-code.rpm"
         install_kind='package'
         install_command='sudo yum install --assumeyes'
       else
@@ -232,7 +231,7 @@ main() {
       # install_command carries the command and its flags, so it is split on purpose.
       $install_command "$package_path"
       if [ "$install_kind" = 'appimage' ]; then
-        install_appimage_launcher "$package_path" "$temporary_directory"
+        install_appimage_launcher "$package_path" "$staging_directory"
         write_exec_wrapper "$package_path" "${HOME}/.local/bin/open-claude-code"
         print_install_ok "${HOME}/.local/bin"
         start_installed_app "${HOME}/.local/bin/open-claude-code"
@@ -249,7 +248,11 @@ main() {
 }
 
 # scripts/install_cli_wrapper_test.sh sets this to source the helpers without
-# running an install.
+# running an install. The staging directory and its trap live here rather than in
+# main() because the trap fires at EXIT, after main() has returned and its locals
+# are gone; declaring it here also keeps the sourced namespace free of it.
 if [ "${INSTALL_SH_LIB_ONLY:-0}" != 1 ]; then
+  staging_directory="$(mktemp -d)"
+  trap 'rm -rf "$staging_directory"' EXIT INT TERM
   main
 fi
