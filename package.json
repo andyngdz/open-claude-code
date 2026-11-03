@@ -24,7 +24,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.88.0",
     "tailwindcss": "^4.3.3",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
